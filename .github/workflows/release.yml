@@ -3,8 +3,9 @@
 # 1. Click this workflow and choose patch/minor/major.
 # 2. The current package.json version is published as the Git tag
 #    and GitHub Release.
-# 3. Release notes are generated from the diff since the last
-#    published release tag.
+# 3. Initial release notes are a one-off summary of the latest
+#    updates. Later release notes are generated from the diff since
+#    the last published release tag.
 # 4. The next version bump is opened as a PR instead of pushing
 #    directly to `main` so branch protection stays intact and
 #    semver progression remains reviewable.
@@ -63,39 +64,60 @@ jobs:
           echo "version=${current_version}" >> "$GITHUB_OUTPUT"
           echo "release_tag=v${current_version}" >> "$GITHUB_OUTPUT"
 
-      - name: Fail if release tag already exists
-        shell: bash
-        run: |
-          if git rev-parse \
-            "refs/tags/${{ steps.current.outputs.release_tag }}" \
-            >/dev/null 2>&1; then
-            echo "Tag ${{ steps.current.outputs.release_tag }} already exists."
-            exit 1
-          fi
-
-      - name: Create and push release tag
-        run: |
-          git tag "${{ steps.current.outputs.release_tag }}"
-          git push origin "${{ steps.current.outputs.release_tag }}"
-
-      - name: Find previous published release tag
-        id: previous
+      - name: Inspect current release state
+        id: release_state
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          previous_tag="$(
+          release_tag="${{ steps.current.outputs.release_tag }}"
+          tag_exists="false"
+          release_exists="false"
+          previous_tag=""
+
+          if git rev-parse "refs/tags/${release_tag}" >/dev/null 2>&1; then
+            tag_exists="true"
+          fi
+
+          if gh release view "${release_tag}" >/dev/null 2>&1; then
+            release_exists="true"
+          fi
+
+          if previous_tag="$(
             gh api "repos/${{ github.repository }}/releases/latest" \
-              --jq '.tag_name' 2>/dev/null || true
-          )"
+              --jq '.tag_name' 2>/dev/null
+          )"; then
+            :
+          else
+            previous_tag=""
+          fi
+
+          echo "tag_exists=${tag_exists}" >> "$GITHUB_OUTPUT"
+          echo "release_exists=${release_exists}" >> "$GITHUB_OUTPUT"
           echo "tag=${previous_tag}" >> "$GITHUB_OUTPUT"
 
-      - name: Generate release notes from last release diff
+      - name: Fail if release already exists for this tag
+        shell: bash
+        run: |
+          release_exists="${{ steps.release_state.outputs.release_exists }}"
+          release_tag="${{ steps.current.outputs.release_tag }}"
+          if [[ "${release_exists}" == "true" ]]; then
+            echo "Release ${release_tag} already exists."
+            exit 1
+          fi
+
+      - name: Create and push release tag
+        if: ${{ steps.release_state.outputs.tag_exists != 'true' }}
+        run: |
+          git tag "${{ steps.current.outputs.release_tag }}"
+          git push origin "${{ steps.current.outputs.release_tag }}"
+
+      - name: Generate release notes
         id: notes
         shell: bash
         run: |
           current_tag="${{ steps.current.outputs.release_tag }}"
-          previous_tag="${{ steps.previous.outputs.tag }}"
+          previous_tag="${{ steps.release_state.outputs.tag }}"
           notes_file="$RUNNER_TEMP/release-notes.md"
 
           {
@@ -106,17 +128,20 @@ jobs:
               echo
               echo "Compare:"
               compare_url="https://github.com/${{ github.repository }}"
-              compare_url="${compare_url}/compare/${previous_tag}...${current_tag}"
+              compare_url="${compare_url}/compare/"
+              compare_url="${compare_url}${previous_tag}...${current_tag}"
               echo "${compare_url}"
               echo
               echo "## Changes"
               git log --no-merges --reverse \
-                --pretty='- %s (%h)' "${previous_tag}..HEAD"
+                --pretty='- %s (%h)' "${previous_tag}..${current_tag}"
             else
               echo "Initial release."
               echo
-              echo "## Included commits"
-              git log --no-merges --reverse --pretty='- %s (%h)'
+              echo "This first release summarizes the latest bot updates."
+              echo
+              echo "## Latest updates"
+              git log --no-merges --pretty='- %s (%h)' -n 15 "${current_tag}"
             fi
           } > "${notes_file}"
 
@@ -186,7 +211,10 @@ jobs:
           previous_release_label="Previous release tag:"
           next_version_label="Next package.json version:"
           bump_branch_label="Release bump PR branch:"
-          previous_release_tag="${{ steps.previous.outputs.tag || 'none' }}"
+          previous_release_tag_value="$(
+            printf '%s' "${{ steps.release_state.outputs.tag || 'none' }}"
+          )"
+          previous_release_tag="${previous_release_tag_value}"
           next_package_version="v${{ steps.next.outputs.version }}"
           release_bump_branch="${{ steps.bump_branch.outputs.branch }}"
           {
