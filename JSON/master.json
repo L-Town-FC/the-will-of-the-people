@@ -418,19 +418,6 @@
       "caught": false
     }
   },
-  "501930484838957069": {
-    "name": "Tom",
-    "gbp": 2525,
-    "achievements": [
-      10
-    ],
-    "insulted": false,
-    "steal": {
-      "insurance": 0,
-      "attempts": 0,
-      "caught": false
-    }
-  },
   "581903756111773716": {
     "name": "Justin",
     "gbp": 2563,
@@ -526,6 +513,28 @@
       17,
       10
     ],
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
+    }
+  },
+  "853807883250696202": {
+    "name": "Ben",
+    "gbp": 2500,
+    "achievements": [],
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
+    }
+  },
+  "427868857500172290": {
+    "name": "Jack",
+    "gbp": 2500,
+    "achievements": [],
     "insulted": false,
     "steal": {
       "insurance": 0,
