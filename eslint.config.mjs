@@ -9,6 +9,12 @@ export default [
   {
     files: ["**/*.js"], 
     languageOptions: {sourceType: "commonjs"}},
+  {
+    files: ["test/**/*.js"],
+    languageOptions: {
+      globals: globals.jest,
+    },
+  },
   {languageOptions: 
     { globals: 
       globals.browser}

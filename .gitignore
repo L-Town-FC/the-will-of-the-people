@@ -1,6 +1,5 @@
 # ignore certain files on github
 node_modules
-# package-lock.json
-creds.sh
 .env
+.codex
 coverage/

@@ -1,0 +1,44 @@
+# Deprecated for now. This legacy AWS-era workflow is intentionally disabled.
+# It was moved out of `.github/workflows/` so GitHub no longer treats it as a live action.
+#
+# name: build-push-deploy
+#
+# on:
+#   workflow_dispatch:
+# jobs:
+#
+#   build:
+#
+#     runs-on: ubuntu-latest
+#
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Build and push Docker images
+#         uses: docker/build-push-action@v1.1.0
+#         with:
+#           username: ${{ secrets.docker_username }}
+#           password: ${{ secrets.docker_password }}
+#           # Docker repository to tag the image with
+#           repository: atmollohan/bot
+#           # Comma-delimited list of tags. These will be added to the registry/repository to form the image's tags
+#           tags: latest
+#   deploy:
+#     name: Deploying to AWS
+#     needs: build
+#     runs-on: ubuntu-latest
+#     steps:
+#     - name: executing remote ssh commands using password
+#       uses: appleboy/ssh-action@master
+#       env:
+#         CONTAINER_NAME: "bot"
+#         IMAGE_NAME: "atmollohan/bot:latest"
+#         PRODBOTTOKEN: ${{ secrets.PRODBOTTOKEN }}
+#       with:
+#         host: ${{ secrets.EC2_HOST }}
+#         username: ${{ secrets.EC2_USER }}
+#         key: ${{ secrets.EC2_SSH_SECRET_PEM_PAL }}
+#         envs: CONTAINER_NAME, IMAGE_NAME, PRODBOTTOKEN
+#         script: |
+#           docker stop $CONTAINER_NAME; docker rm $CONTAINER_NAME
+#           docker pull $IMAGE_NAME
+#           docker run -d -e PRODBOTTOKEN=$PRODBOTTOKEN -e NODE_ENV=production --name $CONTAINER_NAME $IMAGE_NAME

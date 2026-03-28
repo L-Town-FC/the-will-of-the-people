@@ -1,40 +1,72 @@
+---
+# Builds and pushes the multi-arch bot image for main branch updates
+# and new semver release tags.
+# Main branch pushes publish only `latest`.
+# Semver tag pushes publish only the semver tag.
+# The job also skips automated version-bump commits when they land
+# with the expected `chore: bump version to v...` message so release
+# automation does not double-build.
 name: buildx
 
-on:
-    push:
-      branches: [ main ]
-    workflow_dispatch:
+"on":
+  push:
+    branches: [main]
+    tags:
+      - "v*.*.*"
+      - "*.*.*"
+  workflow_dispatch:
 
 jobs:
   buildx:
+    if: >-
+      ${{
+        github.ref_type == 'tag' ||
+        !startsWith(
+          github.event.head_commit.message || '',
+          'chore: bump version to v'
+        )
+      }}
     runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ${{ secrets.docker_username }}/bot
     steps:
-      -
-        name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
-      -
-        # Add support for more platforms with QEMU (optional)
-        # https://github.com/docker/setup-qemu-action
-        name: Set up QEMU
+
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with: 
-            platforms: linux/amd64,linux/arm64
-      -
-        name: Login to Docker Hub
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-            username: ${{ secrets.docker_username }}
-            password: ${{ secrets.docker_password }}
-      -
-        name: Build and push
+          username: ${{ secrets.docker_username }}
+          password: ${{ secrets.docker_password }}
+
+      - name: Prepare image tags
+        id: prep
+        shell: bash
+        run: |
+          {
+            echo 'tags<<EOF'
+            if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+              # GitHub Releases trigger this workflow by creating
+              # a new matching tag push.
+              echo "${IMAGE_NAME}:${GITHUB_REF_NAME}"
+            elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+              echo "${IMAGE_NAME}:latest"
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
-            context: .
-            platforms: linux/amd64,linux/arm64
-            push: true
-            tags: |
-                ${{ secrets.docker_username }}/bot:latest
-                ${{ secrets.docker_username }}/bot:${{ github.sha }}
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.prep.outputs.tags }}
