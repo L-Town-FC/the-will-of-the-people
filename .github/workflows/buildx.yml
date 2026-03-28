@@ -35,4 +35,6 @@ jobs:
             context: .
             platforms: linux/amd64,linux/arm64
             push: true
-            tags: ${{ secrets.docker_username }}/bot:latest
+            tags: |
+                ${{ secrets.docker_username }}/bot:latest
+                ${{ secrets.docker_username }}/bot:${{ github.sha }}

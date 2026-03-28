@@ -1,8 +1,17 @@
-version: '3'
-services: 
-    bot:
-        container_name: bot
-        build: 
-            context: .
-            dockerfile: Dockerfile
-        image: atmollohan/bot
+services:
+  bot:
+    container_name: bot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: atmollohan/bot
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PRODBOTTOKEN: ${PRODBOTTOKEN:?PRODBOTTOKEN is required}
+      JSONPATH: /usr/src/bot/volume
+    volumes:
+      - bot-vol:/usr/src/bot/volume
+
+volumes:
+  bot-vol:

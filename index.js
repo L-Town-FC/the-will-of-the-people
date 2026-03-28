@@ -223,6 +223,12 @@ bot.on('messageCreate', message =>{
                 case 'stats': //lets users check stats associated with their server activity 
                     bot.commands.get('stats').execute(message,args, master, stats_list);
                 break;
+                case 'uptime': //shows how long the bot has been online
+                    bot.commands.get('uptime').execute(message, bot);
+                break;
+                case 'msgcount': //shows message count leaderboard
+                    bot.commands.get('msgcount').execute(message, args, stats_list);
+                break;
                 case 'button': //lets users push a button for a chance of winning 100 gbp or losing 1000 gbp
                     bot.commands.get('button').execute(message,args, master, buttonJSON, command_stats);
                     //Gambling Addict Achievement

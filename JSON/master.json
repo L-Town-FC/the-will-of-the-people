@@ -1,8 +1,8 @@
 {
   "450001712305143869": {
-     "name": "Colin",
-     "gbp": 67970,
-     "achievements": [
+    "name": "Colin",
+    "gbp": 67970,
+    "achievements": [
       7,
       5,
       12,
@@ -52,34 +52,34 @@
       32,
       10
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "497803559144914944": {
-     "name": "Andrew",
-     "gbp": 16817.25,
-     "achievements": [
+    "name": "Andrew",
+    "gbp": 16817.25,
+    "achievements": [
       7,
       10,
       17,
       28,
       6
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "499328039621230592": {
-     "name": "Wyatt",
-     "gbp": 100152,
-     "achievements": [
+    "name": "Wyatt",
+    "gbp": 100152,
+    "achievements": [
       24,
       2,
       1,
@@ -112,17 +112,17 @@
       44,
       43
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "463080062175019010": {
-     "name": "Ian",
-     "gbp": 389930,
-     "achievements": [
+    "name": "Ian",
+    "gbp": 389930,
+    "achievements": [
       21,
       3,
       9,
@@ -156,17 +156,17 @@
       10,
       39
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "210861925771247636": {
-     "name": "Zaid",
-     "gbp": 1781,
-     "achievements": [
+    "name": "Zaid",
+    "gbp": 1781,
+    "achievements": [
       11,
       12,
       30,
@@ -202,17 +202,17 @@
       43,
       40
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "501929393401364481": {
-     "name": "Mike",
-     "gbp": 33841.41,
-     "achievements": [
+    "name": "Mike",
+    "gbp": 33841.41,
+    "achievements": [
       3,
       8,
       34,
@@ -228,17 +228,17 @@
       1,
       10
     ],
-     "insulted": true,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": true,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "509430603339399186": {
-     "name": "Brian",
-     "gbp": 6234,
-     "achievements": [
+    "name": "Brian",
+    "gbp": 6234,
+    "achievements": [
       7,
       11,
       34,
@@ -250,17 +250,17 @@
       28,
       1
     ],
-     "insulted": true,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": true,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "526190184455471105": {
-     "name": "Carl",
-     "gbp": 24696.17,
-     "achievements": [
+    "name": "Carl",
+    "gbp": 24696.17,
+    "achievements": [
       24,
       15,
       5,
@@ -281,17 +281,17 @@
       28,
       10
     ],
-     "insulted": true,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": true,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "462798271195119626": {
-     "name": "Alex",
-     "gbp": 6490.5,
-     "achievements": [
+    "name": "Alex",
+    "gbp": 6490.5,
+    "achievements": [
       11,
       17,
       19,
@@ -299,31 +299,31 @@
       15,
       29
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "562203622474252288": {
-     "name": "Dylan",
-     "gbp": 3543.5,
-     "achievements": [
+    "name": "Dylan",
+    "gbp": 3543.5,
+    "achievements": [
       16,
       10
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "501887537451630593": {
-     "name": "Ramzi",
-     "gbp": 11585,
-     "achievements": [
+    "name": "Ramzi",
+    "gbp": 11585,
+    "achievements": [
       11,
       3,
       15,
@@ -336,17 +336,17 @@
       7,
       6
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "434471986748456962": {
-     "name": "Chrisvan",
-     "gbp": 46,
-     "achievements": [
+    "name": "Chrisvan",
+    "gbp": 46,
+    "achievements": [
       16,
       11,
       28,
@@ -359,17 +359,17 @@
       40,
       10
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "497861779020578837": {
-     "name": "Hayden",
-     "gbp": 11081.64,
-     "achievements": [
+    "name": "Hayden",
+    "gbp": 11081.64,
+    "achievements": [
       8,
       9,
       2,
@@ -411,43 +411,30 @@
       47,
       7
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
-    }
-  },
-  "501930484838957069": {
-     "name": "Tom",
-     "gbp": 2525,
-     "achievements": [
-      10
-    ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "581903756111773716": {
-     "name": "Justin",
-     "gbp": 2563,
-     "achievements": [
+    "name": "Justin",
+    "gbp": 2563,
+    "achievements": [
       10
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "508076579684089896": {
-     "name": "Jacob",
-     "gbp": 321,
-     "achievements": [
+    "name": "Jacob",
+    "gbp": 321,
+    "achievements": [
       11,
       7,
       15,
@@ -464,17 +451,17 @@
       23,
       40
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "525147400176664626": {
-     "name": "Teddy",
-     "gbp": 2599.5,
-     "achievements": [
+    "name": "Teddy",
+    "gbp": 2599.5,
+    "achievements": [
       24,
       15,
       16,
@@ -483,89 +470,87 @@
       7,
       17
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "640368746690510868": {
-     "name": "Slim",
-     "gbp": 2445,
-     "achievements": [
+    "name": "Slim",
+    "gbp": 2445,
+    "achievements": [
       24,
       17,
       10
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "498262864541515786": {
-     "name": "Derek",
-     "gbp": 2651,
-     "achievements": [
+    "name": "Derek",
+    "gbp": 2651,
+    "achievements": [
       10,
       17
     ],
-     "insulted": true,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": true,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "411324964273258519": {
-     "name": "Dan",
-     "gbp": 2239,
-     "achievements": [
+    "name": "Dan",
+    "gbp": 2239,
+    "achievements": [
       17,
       10
     ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
-  "734794146035794101": {
-     "name": "Yiro",
-     "gbp": 3444,
-     "achievements": [
-      10
-    ],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+  "853807883250696202": {
+    "name": "Ben",
+    "gbp": 2500,
+    "achievements": [],
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
+    }
+  },
+  "427868857500172290": {
+    "name": "Jack",
+    "gbp": 2500,
+    "achievements": [],
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   },
   "854706962079154186": {
-     "name": "Default",
-     "gbp": 289,
-     "achievements": [],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
-    }
-  },
-  "1338880756973572208": {
-     "name": "Kyle",
-     "gbp": 254,
-     "achievements": [],
-     "insulted": false,
-     "steal": {
-       "insurance": 0,
-       "attempts": 0,
-       "caught": false
+    "name": "Default",
+    "gbp": 289,
+    "achievements": [],
+    "insulted": false,
+    "steal": {
+      "insurance": 0,
+      "attempts": 0,
+      "caught": false
     }
   }
 }
