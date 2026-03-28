@@ -9,7 +9,7 @@
     "start": "node index.js",
     "start:dev": "NODE_ENV=local nodemon index.js",
     "start:local": "NODE_ENV=local node index.js",
-    "test": "node scripts/test-json-names.js && node scripts/test-json-shape.js"
+    "test": "jest test"
   },
   "author": "Colin",
   "license": "ISC",
@@ -23,6 +23,7 @@
     "@eslint/js": "^9.6.0",
     "eslint": "^9.6.0",
     "globals": "^15.6.0",
+    "jest": "^30.3.0",
     "nodemon": "^3.1.2"
   }
 }

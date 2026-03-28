@@ -16,7 +16,8 @@ Part joke, part institution, this bot became the engine of the server's economy,
 - `commands/`: user-facing bot commands
 - `commands/Functions/`: shared helpers for stats, achievements, embeds, and general command behavior
 - `JSON/`: tracked bot state and command metadata
-- `scripts/`: deployment helpers and JSON sanity tests
+- `scripts/`: deployment helpers
+- `test/`: lightweight JSON sanity tests
 
 ## Local setup
 
@@ -58,8 +59,8 @@ npm test
 
 Current checks:
 
-- `scripts/test-json-names.js`: verifies approved user names across `master.json`, `stats.json`, and `tracker.json`
-- `scripts/test-json-shape.js`: verifies those JSON files share the same user ids and required core fields
+- `test/json-names.test.js`: verifies approved user names across `master.json`, `stats.json`, and `tracker.json`
+- `test/json-shape.test.js`: verifies those JSON files share the same user ids and required core fields
 
 Lint the codebase with:
 
