@@ -1,0 +1,5 @@
+{
+  "ignore": ["JSON/**", "node_modules/**", "kumiko_pics/**", "insult_pics/**", "pug_pics/**", "msg_formats/**", "text_files/**"],
+  "ext": "js",
+  "delay": 500
+}

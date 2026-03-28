@@ -1,8 +1,8 @@
 {
     "1":{
-        "name": "!pug",
-        "description":"Posts a random pug picture",
-        "rules":""
+        "name": "!=",
+        "description": "Lets you do basic, 2 term math",
+        "rules": ["!= [number] [operator] [number]. Operators are [+,-,*,/,^]"]
     },
     "2":{
         "name": "!21",
@@ -11,80 +11,116 @@
                 "**!21:** If the user already has an active game, send the UI, otherwise do nothing"]
     },
     "3":{
-        "name": "!flip",
-        "description":"Flips a coin",
-        "rules":""
+        "name":"!achievements",
+        "description":"Lets you track achievements gotten in the server",
+        "rules":["**!achievements:** Lists your personal achievements",
+            "**!achievements [name]:** List achievements of given person",
+            "**!achievements list [number]:** Lists all possible achievements. If a number is given it shows you progress on the chosen number"]
     },
     "4":{
-        "name": "!council",
-        "description":"Gets input from the council",
-        "rules":""
-    },
-    "5":{
-        "name": "!teams",
-        "description":"Lets you create randomized teams",
-        "rules":["**!teams add [person 1] [person 2]... :** Lets you add people to the teams list. Can be done multiple times",
-        "**!teams people:**Gives you a list of everyone slated to join a team",
-        "**!teams [number of desired teams]:** Splits the list of people into the desired number of teams",
-        "**!teams clear: ** Clears the list of people"]
-    },
-    "6":{
         "name": "!bank",
         "description":"Displays how much gbp a user has\nCan display gbp over time",
         "rules":["**!bank [person]:** Shows Public gbp of specified person. Defaults to user if noone is specified",
 "**!bank [name] [day or week]:** Generates a chart of the given person over the past day/week"]
     },
+    "5":{
+        "name":"!boo",
+        "description":"Lets you see and choose who is being booed\nCosts 250 gbp to move",
+        "rules":["**!boo [user]:** Makes the bot boo the specified user. If no user is specified it states who is currently being booed"]
+    },
+    "6":{
+        "name": "!button",
+        "description": "The button has a 90% chance of giving you 100 gbp but a 10% chance of taking 1000 gbp",
+        "rules": ["**!button:** Pushes the button", "**!button stats:** Shows you stats relating to the button"]
+    },
     "7":{
-        "name": "!insults",
-        "description":"Allows you to see and set who is being insulted",
-        "rules":["**!insults on [person]:** Makes it so the bot insults the specified person. If no user is specified it shows who is currently being insulted", 
-            "**!insults off [person]**: Makes it so specified person no longer recieves insults from bot"]
+        "name":"!changelog",
+        "description":"Displays list of everything that was changed in the latest update",
+        "rules":""
     },
     "8":{
-        "name": "!delete",
+        "name": "!council",
+        "description":"Gets input from the council",
+        "rules":""
+    },
+    "9":{
+        "name":"!delete",
         "description":"Deletes previous messages\nCosts 1500 gbp per message\nCan only be used 5 times per day",
         "rules":["**!delete [amount]:** Deletes specified number of messages. If no amount is specified it defaults to 1"]
     },
-    "9":{
-        "name": "!gg",
+    "10":{
+        "name": "!emojis",
+        "description": "Lets users track reaction usages",
+        "rules": ["**!emojis:** Lists the top 5 and bottom 5 emojis based on their reaction usage",
+        "**!emojis all:** Lists all emojis are their reaction usage in one list"]
+    },
+    "11":{
+        "name": "!flip",
+        "description":"Flips a coin",
+        "rules":""
+    },
+    "12":{
+        "name":"!gg",
         "description":"Try to guess a number between 1 and 100 inclusive with 3 guesses\nGives a 20X payout",
         "rules":["**!gg bet [bet amount]:** Starts game with specified bet",
         "**!gg [guess number]:** Use 1 of your guesses to try and guess the correct number",
     "**!gg status:** Names if anyone is playing and what guess they are on"]
     },
-    "10":{
-        "name": "!kumiko",
+    "13":{
+        "name":"!insults",
+        "description":"Allows you to see and set who is being insulted",
+        "rules":["**!insults on [person]:** Makes it so the bot insults the specified person. If no user is specified it shows who is currently being insulted", 
+            "**!insults off [person]**: Makes it so specified person no longer recieves insults from bot"]
+    },
+    "14":{
+        "name":"!kumiko",
         "description":"Posts a picture of Kumiko from the critically acclaimed show Sound! Euphonium\nCosts 15 gbp per use",
         "rules":""
     },
-    "11":{
-        "name": "!powerball",
+    "15":{
+        "name": "!kumikosays",
+        "description": "Lets you make an image where kumiko says something",
+        "rules": ["**!kumikosays [message]:** Sends and image with a specified message"]
+    },
+    "16":{
+        "name": "!msg",
+        "description": "Lets you pay the bot to dm people for 50gbp",
+        "rules": ["**!msg [name] [message]:** Sends your message to the specified person"]
+    },
+    "17":{
+        "name":"!msgcount",
+        "description":"Shows users ranked by total messages and can show all users",
+        "rules":["**!msgcount leaderboard:** Shows top 3 users by total messages","**!msgcount all:** Shows all users sorted by total messages"]
+    },
+    "18":{
+        "name":"!names",
+        "description":"Lists the names of all the people on the server",
+        "rules":""
+    },
+    "19":{
+        "name":"!powerball",
         "description":"Enters you into the Powerball for 5 gbp per ticket",
         "rules":["**!powerball buy [Number of Tickets]:** Purchases the nubmer of specified tickets. If no number is specified, it defaults to 1",
             "**!powerball stats:** Shows the number of tickets that have been bought and the amount of gbp in the lottery"]
     },
-    "12":{
-        "name": "!transfer",
-        "description":"Allows a user to transfer gbp to another user",
-        "rules":["**!transfer [user] [amount]:** Transfer the specified amount of gpb to the specified user",
-        "**!transfer [split] [amount] [name 1] [name 2] ...: Lets you split the specified amount evenly between multiple people"]
-    },
-    "13":{
-        "name": "!names",
-        "description":"Lists the names of all the people on the server",
+    "20":{
+        "name": "!pug",
+        "description":"Posts a random pug picture",
         "rules":""
     },
-    "14":{
-        "name":"!changelog",
-        "description":"Displays list of everything that was changed in the latest update",
-        "rules":""
+    "21":{
+        "name": "!roles",
+        "description": "Let users check roles",
+        "rules": ["**!roles:** Shows you the elecable roles and who currently has them"]
     },
-    "15":{
-        "name":"!boo",
-        "description":"Lets you see and choose who is being booed\nCosts 250 gbp to move",
-        "rules":["**!boo [user]:** Makes the bot boo the specified user. If no user is specified it states who is currently being booed"]
+    "22":{
+        "name":"!roulette",
+        "description":"Lets you play roulette with multiple people",
+        "rules":["**!roulette bet [Time]:** Starts roulette game where betting ends after [Time] seconds",
+            "**!roulette list:** Shows you the roulette board, basics, and payouts",
+            "**!roulette numbers:** Shows you the last 10 numbers called"]
     },
-    "16":{
+    "23":{
         "name":"!steal",
         "description":"Steals from selected user",
         "rules":["**!steal [user] [amount to steal]:** Lets you attempt to steal from designated amount from the specified user",
@@ -92,50 +128,24 @@
             "**!steal basics:** Gives more information about !steal",
             "**!steal odds [target] [amount]:** Gives you the odds of failure for a specific target at a specific amount"
         ]
-        },
-    "17":{
-        "name":"!achievements",
-        "description":"Lets you track achievements gotten in the server",
-        "rules":["**!achievements:** Lists your personal achievements",
-            "**!achievements [name]:** List achievements of given person",
-            "**!achievements list [number]:** Lists all possible achievements. If a number is given it shows you progress on the chosen number"]
     },
-    "18":{
-        "name":"!roulette",
-        "description":"Lets you play roulette with multiple people",
-        "rules":["**!roulette bet [Time]:** Starts roulette game where betting ends after [Time] seconds",
-            "**!roulette list:** Shows you the roulette board, basics, and payouts",
-            "**!roulette numbers:** Shows you the last 10 numbers called"]
+    "24":{
+        "name":"!teams",
+        "description":"Lets you create randomized teams",
+        "rules":["**!teams add [person 1] [person 2]... :** Lets you add people to the teams list. Can be done multiple times",
+        "**!teams people:**Gives you a list of everyone slated to join a team",
+        "**!teams [number of desired teams]:** Splits the list of people into the desired number of teams",
+        "**!teams clear: ** Clears the list of people"]
     },
-    "19":{
-        "name": "!button",
-        "description": "The button has a 90% chance of giving you 100 gbp but a 10% chance of taking 1000 gbp",
-        "rules": ["**!button:** Pushes the button", "**!button stats:** Shows you stats relating to the button"]
+    "25":{
+        "name":"!transfer",
+        "description":"Allows a user to transfer gbp to another user",
+        "rules":["**!transfer [user] [amount]:** Transfer the specified amount of gpb to the specified user",
+        "**!transfer [split] [amount] [name 1] [name 2] ...: Lets you split the specified amount evenly between multiple people"]
     },
-    "20":{
-        "name": "!msg",
-        "description": "Lets you pay the bot to dm people for 50gbp",
-        "rules": ["**!msg [name] [message]:** Sends your message to the specified person"]
-    },
-    "21":{
-        "name": "!=",
-        "description": "Lets you do basic, 2 term math",
-        "rules": ["!= [number] [operator] [number]. Operators are [+,-,*,/,^]"]
-    },
-    "22":{
-        "name": "!kumikosays",
-        "description": "Lets you make an image where kumiko says something",
-        "rules": ["**!kumikosays [message]:** Sends and image with a specified message"]
-    },
-    "23":{
-        "name": "!roles",
-        "description": "Let users check roles",
-        "rules": ["**!roles:** Shows you the elecable roles and who currently has them"]
-    },
-    "24": {
-        "name": "!emojis",
-        "description": "Lets users track reaction usages",
-        "rules": ["**!emojis:** Lists the top 5 and bottom 5 emojis based on their reaction usage",
-        "**!emojis all:** Lists all emojis are their reaction usage in one list"]
+    "26":{
+        "name":"!uptime",
+        "description":"Shows how long the bot has been online",
+        "rules":["**!uptime:** Displays the bot's uptime in days, hours, minutes, and seconds"]
     }
 }

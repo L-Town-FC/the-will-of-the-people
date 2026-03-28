@@ -1,6 +1,6 @@
 #!/bin/bash
 echo 'Running deployment to AWS EC2 instance'
-. $PWD/deploy/time_info.sh
+. $PWD/scripts/time_info.sh
 repo=atmollohan
 name=bot
 tag=latest
@@ -11,7 +11,7 @@ if [ ! -e "$env_file_location" ]; then
     echo ".env file does not exist got find it"
 else 
     echo "Sourcing .env for deployment it..."
-    source env_file_location
+    source "$env_file_location"
     echo "Ready to connect to $EC2_HOST as $EC2_USER"
     echo "Trial is $TRIAL on client"
     ssh -i $PATH_TO_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST  TRIAL=$TRIAL BOTTOKEN=$BOTTOKEN  IMAGE_NAME=$image_full_tag CONTAINER_NAME=$name '''
