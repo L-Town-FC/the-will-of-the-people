@@ -15,6 +15,13 @@ name: buildx
       - "v*.*.*"
       - "*.*.*"
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: >-
+          Optional semver tag to publish explicitly, for example v2.2.1.
+          When set, this run publishes only that tag.
+        required: false
+        type: string
 
 jobs:
   buildx:
@@ -51,9 +58,12 @@ jobs:
         id: prep
         shell: bash
         run: |
+          release_tag="${{ inputs.release_tag }}"
           {
             echo 'tags<<EOF'
-            if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            if [[ -n "${release_tag}" ]]; then
+              echo "${IMAGE_NAME}:${release_tag}"
+            elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
               # GitHub Releases trigger this workflow by creating
               # a new matching tag push.
               echo "${IMAGE_NAME}:${GITHUB_REF_NAME}"
