@@ -4,7 +4,7 @@ const path = require('node:path');
 
 function readJson(relativePath) {
   return JSON.parse(
-    fs.readFileSync(path.join(__dirname, '..', relativePath), 'utf8')
+    fs.readFileSync(path.join(__dirname, '..', '..', relativePath), 'utf8')
   );
 }
 

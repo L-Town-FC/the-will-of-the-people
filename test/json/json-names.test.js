@@ -37,7 +37,7 @@ describe('JSON name roster', () => {
   test.each(Object.entries(expectedByFile))(
     '%s matches the approved roster',
     (relativePath, expected) => {
-      const filePath = path.join(__dirname, '..', relativePath);
+      const filePath = path.join(__dirname, '..', '..', relativePath);
       const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
       const actualNames = Object.values(data)
         .map((entry) => entry.name)

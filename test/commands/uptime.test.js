@@ -1,6 +1,6 @@
 const { describe, expect, test } = require('@jest/globals');
-const uptime = require('../commands/uptime');
-const { createMessage } = require('./helpers/createMessage');
+const uptime = require('../../commands/uptime');
+const { createMessage } = require('../helpers/createMessage');
 
 describe('uptime command', () => {
   test('formats bot uptime into days, hours, minutes, and seconds', () => {
