@@ -1,4 +1,6 @@
 # ignore certain files while building docker image
 node_modules
 package-lock.json
-creds.sh
+.env
+.codex
+coverage/
