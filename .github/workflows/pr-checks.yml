@@ -1,6 +1,11 @@
+---
+# Runs the repository's pull request quality gates:
+# install, formatting, lint, tests, coverage summary,
+# and prints package metadata so the semver source of truth
+# is visible during review.
 name: pr-checks
 
-on:
+"on":
   pull_request:
     branches: [main]
 
@@ -18,8 +23,22 @@ jobs:
           node-version-file: ".nvmrc"
           cache: npm
 
+      - name: Print package and runtime info
+        run: |
+          echo "package name: $(node -p "require('./package.json').name")"
+          echo "package version: $(node -p "require('./package.json').version")"
+          echo "commit hash: ${GITHUB_SHA}"
+          echo "Node version: $(node -v)"
+          echo "npm version: $(npm -v)"
+
       - name: Install dependencies
         run: npm ci
+
+      - name: Print package.json
+        run: cat package.json
+
+      - name: Print outdated packages
+        run: npm outdated || true
 
       - name: Format check
         run: |
@@ -30,9 +49,28 @@ jobs:
         run: npm run lint
 
       - name: Test with coverage
-        run: |
-          npm run test:coverage -- --coverageReporters=text-summary --coverageReporters=json-summary
+        run: >
+          npm run test:coverage --
+          --coverageReporters=text-summary
+          --coverageReporters=json-summary
 
       - name: Print coverage and commit info
         run: |
-          node -e 'const fs = require("fs"); const summary = JSON.parse(fs.readFileSync("coverage/coverage-summary.json", "utf8")); const totals = summary.total; const sha = process.env.GITHUB_SHA; const message = ["PR checks complete", "Commit: " + sha, "Coverage: statements " + totals.statements.pct + "% | branches " + totals.branches.pct + "% | functions " + totals.functions.pct + "% | lines " + totals.lines.pct + "%"].join("\n"); console.log(message); fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, message + "\n");'
+          node <<'NODE'
+          const fs = require("fs");
+          const summary = JSON.parse(
+            fs.readFileSync("coverage/coverage-summary.json", "utf8")
+          );
+          const totals = summary.total;
+          const sha = process.env.GITHUB_SHA;
+          const message = [
+            "PR checks complete",
+            `Commit: ${sha}`,
+            `Coverage: statements ${totals.statements.pct}% | ` +
+              `branches ${totals.branches.pct}% | ` +
+              `functions ${totals.functions.pct}% | ` +
+              `lines ${totals.lines.pct}%`,
+          ].join("\n");
+          console.log(message);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${message}\n`);
+          NODE
