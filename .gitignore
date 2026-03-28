@@ -1,5 +1,18 @@
-# ignore certain files on github
-node_modules
+# Dependencies
+node_modules/
+
+# Local environment files
 .env
-.codex
+.env.local
+.env.*.local
+
+# Local Codex planning files
+.codex/
+
+# Test output
 coverage/
+.nyc_output/
+
+# Logs and OS/editor noise
+*.log
+.DS_Store

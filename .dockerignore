@@ -1,6 +1,18 @@
-# ignore certain files while building docker image
-node_modules
-package-lock.json
-.env
+# Git and local tooling
+.git
+.github
+.gitignore
 .codex
+.codex/
+.vscode
+
+# Local environment and outputs
+.env
 coverage/
+node_modules/
+*.log
+
+# Local/dev-only docs and configs
+docker-compose.yml
+README.md
+test/
