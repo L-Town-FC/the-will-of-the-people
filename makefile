@@ -1,6 +1,6 @@
-.PHONY: develop start install clean clean_install outdated node_use node_versions build build_multi_arch deploy_aws deploy_pi compose_build compose_up compose_restart compose_logs compose_down
+.PHONY: dev start install clean clean_install outdated node_use node_versions build build_multi_arch deploy_aws deploy_pi compose_build compose_up compose_restart compose_logs compose_down
 
-develop:
+dev:
 	npm run start:dev
 
 start:

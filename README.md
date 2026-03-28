@@ -90,5 +90,5 @@ The `makefile` exposes a few shortcuts for common tasks:
 make build
 make deploy_aws
 make deploy_pi
-make develop
+make dev
 ```
