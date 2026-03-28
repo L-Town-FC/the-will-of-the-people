@@ -147,5 +147,10 @@
         "name":"!uptime",
         "description":"Shows how long the bot has been online",
         "rules":["**!uptime:** Displays the bot's uptime in days, hours, minutes, and seconds"]
+    },
+    "27":{
+        "name":"!version",
+        "description":"Shows the version baked into the running bot container",
+        "rules":["**!version:** Displays the current APP_VERSION for this running bot instance"]
     }
 }

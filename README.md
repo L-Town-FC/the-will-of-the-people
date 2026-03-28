@@ -9,6 +9,7 @@ Part joke, part institution, this bot became the engine of the server's economy,
 - Stores bot state in tracked JSON files under `JSON/`
 - Supports local development with `nodemon`
 - Includes lightweight JSON sanity tests for developer changes
+- Exposes a `!version` command backed by the image's baked-in `APP_VERSION`
 
 ## Project layout
 
@@ -73,6 +74,7 @@ npm run lint
 - The bot reads command files dynamically from `commands/`, but commands still need to be wired into the `switch` in `index.js`.
 - `JSONPATH` is optional. If it is missing, the bot logs `Null database path found` and falls back to the local tracked JSON directory.
 - `nodemon.json` ignores the JSON state files so normal bot activity does not constantly restart local development.
+- `APP_VERSION` is baked into container images at build time. Release-tag builds use the semver tag, and normal `main` builds use the short commit SHA.
 
 ## Deployment scripts
 

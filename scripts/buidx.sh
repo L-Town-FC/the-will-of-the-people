@@ -1,11 +1,19 @@
 #!/bin/bash
 echo 'Running buildx for multi-arch build and push'
 . $PWD/scripts/time_info.sh
+. $PWD/scripts/image_version.sh
 
-repo=atmollohan
-name=bot
-tag=latest
-image_full_tag=$repo/$name:$tag
+resolve_image_tags "${1:-}"
+print_image_selection
+docker_tag_args=()
+for tag in "${IMAGE_TAGS[@]}"; do
+    docker_tag_args+=(--tag "$repo/$name:$tag")
+done
 docker buildx ls
 docker buildx create --name mybuilder --use --bootstrap
-docker buildx build --push --platform linux/amd64,linux/arm64 --tag atmollohan/bot:latest .
+docker buildx build \
+    --push \
+    --platform linux/amd64,linux/arm64 \
+    --build-arg APP_VERSION="$APP_VERSION" \
+    "${docker_tag_args[@]}" \
+    .

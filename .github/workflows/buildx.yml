@@ -1,11 +1,11 @@
 ---
 # Builds and pushes the multi-arch bot image for main branch updates
 # and new semver release tags.
-# Main branch pushes publish only `latest`.
+# Main branch pushes publish `latest` and the short commit SHA.
 # Semver tag pushes publish only the semver tag.
 # The job also skips automated version-bump commits when they land
 # with the expected `chore: bump version to v...` message so release
-# automation does not double-build.
+# automation does not publish `latest` for those bumps.
 name: buildx
 
 "on":
@@ -59,18 +59,25 @@ jobs:
         shell: bash
         run: |
           release_tag="${{ inputs.release_tag }}"
+          short_sha="${GITHUB_SHA::7}"
+          app_version="unknown"
           {
             echo 'tags<<EOF'
             if [[ -n "${release_tag}" ]]; then
               echo "${IMAGE_NAME}:${release_tag}"
+              app_version="${release_tag}"
             elif [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
               # GitHub Releases trigger this workflow by creating
               # a new matching tag push.
               echo "${IMAGE_NAME}:${GITHUB_REF_NAME}"
+              app_version="${GITHUB_REF_NAME}"
             elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
               echo "${IMAGE_NAME}:latest"
+              echo "${IMAGE_NAME}:${short_sha}"
+              app_version="${short_sha}"
             fi
             echo 'EOF'
+            echo "app_version=${app_version}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Build and push
@@ -80,3 +87,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.prep.outputs.tags }}
+          build-args: |
+            APP_VERSION=${{ steps.prep.outputs.app_version }}

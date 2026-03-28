@@ -1,10 +1,7 @@
 #!/bin/bash
 echo 'Running deployment to AWS EC2 instance'
 . $PWD/scripts/time_info.sh
-repo=atmollohan
-name=bot
-tag=latest
-image_full_tag=$repo/$name:$tag
+. $PWD/scripts/image_version.sh
 env_file_name=.env
 env_file_location=$PWD/$env_file_name
 volume_name=bot-vol
@@ -14,6 +11,10 @@ if [ ! -e "$env_file_location" ]; then
 else 
     echo "Sourcing .env for deployment it..."
     source "$env_file_location"
+    resolve_image_tags "${1:-}"
+    deploy_tag="${DEPLOY_TAG:-${IMAGE_TAGS[0]}}"
+    image_full_tag="$repo/$name:$deploy_tag"
+    echo "Deploying image tag: $deploy_tag"
     echo "Ready to connect to $EC2_HOST as $EC2_USER"
     ssh -i $PATH_TO_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST PRODBOTTOKEN=$PRODBOTTOKEN IMAGE_NAME=$image_full_tag CONTAINER_NAME=$name VOLUME_NAME=$volume_name JSONPATH=$json_path '
     echo "Connected to $HOSTNAME as $USER at $PWD"
