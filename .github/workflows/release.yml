@@ -104,6 +104,9 @@ jobs:
           release_tag="${{ steps.current.outputs.release_tag }}"
           if [[ "${release_exists}" == "true" ]]; then
             echo "Release ${release_tag} already exists."
+            echo "Next step: bump package.json and package-lock.json"
+            echo "to the next unreleased version, merge that change,"
+            echo "and rerun this workflow for the new version."
             exit 1
           fi
 
