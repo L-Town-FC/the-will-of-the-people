@@ -2,19 +2,37 @@ name: pr-checks
 
 on:
   pull_request:
-    branches: [ develop, main ]
+    branches: [develop, main]
 
 jobs:
-  build:
-
+  checks:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-      - run: npm ci
-      - run: npm run test
-      - run: echo $GITHUB_SHA
-      - run: npm run lint
+          node-version-file: ".nvmrc"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format check
+        run: |
+          npx eslint . --fix
+          git diff --exit-code
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test with coverage
+        run: |
+          npm run test:coverage -- --coverageReporters=text-summary --coverageReporters=json-summary
+
+      - name: Print coverage and commit info
+        run: |
+          node -e 'const fs = require("fs"); const summary = JSON.parse(fs.readFileSync("coverage/coverage-summary.json", "utf8")); const totals = summary.total; const sha = process.env.GITHUB_SHA; const message = ["PR checks complete", "Commit: " + sha, "Coverage: statements " + totals.statements.pct + "% | branches " + totals.branches.pct + "% | functions " + totals.functions.pct + "% | lines " + totals.lines.pct + "%"].join("\n"); console.log(message); fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, message + "\n");'
