@@ -1,7 +1,7 @@
 #!/bin/bash
 echo 'Running deployment to AWS EC2 instance'
-. $PWD/scripts/time_info.sh
-. $PWD/scripts/image_version.sh
+. $PWD/scripts/time-info.sh
+. $PWD/scripts/image-version.sh
 env_file_name=.env
 env_file_location=$PWD/$env_file_name
 volume_name=bot-vol
@@ -20,6 +20,6 @@ else
     echo "Connected to $HOSTNAME as $USER at $PWD"
     docker rm -f $CONTAINER_NAME || true
     docker pull $IMAGE_NAME
-    docker run -d -e PRODBOTTOKEN=$PRODBOTTOKEN -e NODE_ENV=production -e JSONPATH=$JSONPATH --name $CONTAINER_NAME -v $VOLUME_NAME:$JSONPATH $IMAGE_NAME
+    docker run -d --restart unless-stopped -e PRODBOTTOKEN=$PRODBOTTOKEN -e NODE_ENV=production -e JSONPATH=$JSONPATH --name $CONTAINER_NAME -v $VOLUME_NAME:$JSONPATH $IMAGE_NAME
     '
 fi 

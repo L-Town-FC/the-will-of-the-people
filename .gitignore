@@ -5,9 +5,14 @@ node_modules/
 .env
 .env.local
 .env.*.local
+.dev.env
+*.env
 
-# Local Codex planning files
-.codex/
+# Local GSD planning files
+.planning/
+
+# Agentic specs (shared across AI agents)
+.agentic/
 
 # Test output
 coverage/

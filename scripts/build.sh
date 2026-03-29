@@ -1,7 +1,7 @@
 #!/bin/bash
 echo 'Running build and push for single architecture'
-. $PWD/scripts/time_info.sh
-. $PWD/scripts/image_version.sh
+. $PWD/scripts/time-info.sh
+. $PWD/scripts/image-version.sh
 
 env_file_name=.env
 env_file_location=$PWD/$env_file_name

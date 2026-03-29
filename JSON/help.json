@@ -152,5 +152,15 @@
         "name":"!version",
         "description":"Shows the version baked into the running bot container",
         "rules":["**!version:** Displays the current APP_VERSION for this running bot instance"]
+    },
+    "28":{
+        "name":"!logs",
+        "description":"Shows recent bot logs for debugging issues",
+        "rules":["**!logs:** Displays the last 10 log entries"]
+    },
+    "29":{
+        "name":"!info",
+        "description":"Shows bot information and system status",
+        "rules":["**!info:** Displays bot version, uptime, memory, and system info"]
     }
 }

@@ -1,4 +1,4 @@
-.PHONY: dev start install clean clean_install outdated node_use node_versions build build_multi_arch deploy_aws deploy_pi compose_build compose_up compose_restart compose_logs compose_down
+.PHONY: dev start install clean clean-install outdated node-use node-versions build build-multi-arch deploy-aws deploy-pi logs ping-pis compose-build compose-up compose-restart compose-logs compose-down
 
 dev:
 	npm run start:dev
@@ -12,42 +12,48 @@ install:
 clean:
 	rm -rf node_modules/ package-lock.json
 
-clean_install:
+clean-install:
 	make clean
 	make install
 
 outdated:
 	npm outdated
 
-node_use:
+node-use:
 	bash -lc 'source "$$NVM_DIR/nvm.sh" && nvm use'
 
-node_versions:
+node-versions:
 	bash -lc 'source "$$NVM_DIR/nvm.sh" && echo "nvm: $$(nvm --version)" && echo "node: $$(node --version)" && echo ".nvmrc: $$(cat .nvmrc)"'
 
 build:
 	. ./scripts/build.sh
 
-build_multi_arch:
+build-multi-arch:
 	. ./scripts/buildx.sh
 
-deploy_aws:
-	. ./scripts/deploy_aws.sh
+deploy-aws:
+	. ./scripts/deploy-aws.sh
 
-deploy_pi:
-	. ./scripts/deploy_rpi.sh
+deploy-pi:
+	. ./scripts/deploy-rpi.sh
 
-compose_build:
+logs:
+	. ./scripts/logs.sh
+
+ping-pis:
+	. ./scripts/ping-pis.sh
+
+compose-build:
 	docker compose build bot
 
-compose_up:
+compose-up:
 	docker compose up -d bot
 
-compose_restart:
+compose-restart:
 	docker compose up -d --build bot
 
-compose_logs:
+compose-logs:
 	docker compose logs -f bot
 
-compose_down:
+compose-down:
 	docker compose down

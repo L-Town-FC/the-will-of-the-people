@@ -149,118 +149,85 @@ bot.on('messageCreate', message =>{
                 stats.tracker(message.author.id, 8, 1, stats_list) //total commands stat tracker
             }
             switch(args[0].toLowerCase()){
-                case 'ping': //lets you ping the bot to see if its running
-                    bot.commands.get('ping').execute(message, buttonJSON);
-                break;
-                case 'pug': //sends pic of a pug
-                    bot.commands.get('pug').execute(message,master, tracker); 
-                break;
                 case '21': //blackjack
                     bot.commands.get('21').execute(message, args, master, blackJackHands, tracker, stats_list);
                     //Gambling Addict Achievement
                     unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
                 break;
-                case 'flip': //flips a coin
-                    bot.commands.get('flip').execute(message, master, tracker);
-                break;
-                case 'council': //lets you ask the council a question
-                    bot.commands.get('council').execute(message,master,tracker);
+                case 'achievements': //lists all the achievements on the server
+                    bot.commands.get('achievements').execute(message,args, master, tracker);
                 break;
                 case 'bank': //users can check their gbp and the gbp of others
                     bot.commands.get('bank').execute(message,args, master);
                 break;
-                case 'insults': //lets a user check who is being insulted, lets them add and remove people from being insulted
-                    bot.commands.get('insults').execute(message,args, master, tracker);
-                break;
-                case 'delete': //lets a user delete messages
-                    bot.commands.get('delete').execute(message,args,master[message.author.id].gbp, master, tracker);
-                break;
-                case 'gg': //game where the user gets three tries to guess a number between 1 and 100
-                    bot.commands.get('gg').execute(message,args,master[message.author.id].gbp, master, stats_list, tracker);
-                    //Gambling Addict Achievement
-                    unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
-                break;
-                case 'transfer': //lets users transfer gbp between eachother
-                    bot.commands.get('transfer').execute(message,args, master);
-                break;
-                case 'kumiko': //sends the user a picture of kumiko from the Sound Euphonium
-                    bot.commands.get('kumiko').execute(message, master, tracker);
-                break;
-                case 'powerball': //lets users buy lottery tickets and check stats on it
-                    bot.commands.get('powerball').execute(message,args, master[message.author.id].gbp, master, stats_list, tracker, command_stats)
-                    //Gambling Addict Achievement
-                    unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
-                break;
-                case 'names': //lists the names of all users on server
-                    bot.commands.get('names').execute(message,master)
-                break;
-                case 'roles': //lists the current role holders on the server
-                    bot.commands.get('roles').execute(message, master)
-                break;
-                case 'changelog': //lists the most recent changes to the bot
-                    bot.commands.get('changelog').execute(message)
-                break;
-                case 'roulette': //lets users play roulette
-                    bot.commands.get('roulette').execute(message,args,master, tracker, stats_list, betsOpen, approvedBets)
-                    //Gambling Addict Achievement
-                    unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
-                break;
-                case 'help': //gives a list of all commands
-                    bot.commands.get('help').execute(message, args);
-                break;
-                case 'set': //lets me set others gbp values
-                    bot.commands.get('set').execute(message,args, master);
-                break;
                 case 'boo': //lets users set who is currently being booed by the bot
                     bot.commands.get('boo').execute(message,args, master, tracker, command_stats);
-                break;
-                case 'steal': //lets users steal gbp from eachother
-                    bot.commands.get('steal').execute(message,args, master, tracker, bot);
-                break;
-                case 'achievements': //lists all the achievements on the server
-                    bot.commands.get('achievements').execute(message,args, master, tracker);
-                break;
-                case 'stats': //lets users check stats associated with their server activity 
-                    bot.commands.get('stats').execute(message,args, master, stats_list);
-                break;
-                case 'uptime': //shows how long the bot has been online
-                    bot.commands.get('uptime').execute(message, bot);
-                break;
-                case 'version': //shows which release or build is running
-                    bot.commands.get('version').execute(message);
-                break;
-                case 'msgcount': //shows message count leaderboard
-                    bot.commands.get('msgcount').execute(message, args, stats_list);
                 break;
                 case 'button': //lets users push a button for a chance of winning 100 gbp or losing 1000 gbp
                     bot.commands.get('button').execute(message,args, master, buttonJSON, command_stats);
                     //Gambling Addict Achievement
                     unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
                 break;
-                case 'msg': //lets users make the bot dm a different user
-                    bot.commands.get('msg').execute(message, args, master, bot)
-                break;
-                case '=': //basic calculator
-                    bot.commands.get('=').execute(message, args)
-                break;
-                case 'kumikosays': //creates image of kumiko with a speak bubble with user inputted text
-                    bot.commands.get('kumikosays').execute(message, args, bot)
+                case 'changelog': //lists the most recent changes to the bot
+                    bot.commands.get('changelog').execute(message)
                 break;
                 case 'changename': //lets me change someones name in the bot functions
                     bot.commands.get('changename').execute(message, args, master, stats_list, tracker)
                 break;
-                case 'teams': //lets users randomly generate teams
-                    bot.commands.get('teams').execute(message, args, teamsData)
+                case 'council': //lets you ask the council a question
+                    bot.commands.get('council').execute(message,master,tracker);
+                break;
+                case 'logs': //shows recent bot logs
+                case 'l':
+                    bot.commands.get('logs').execute(message, args);
+                break;
+                case 'info': //shows bot info and system status
+                case 'status':
+                case 'botinfo':
+                    bot.commands.get('info').execute(message, args);
+                break;
+                case 'delete': //lets a user delete messages
+                    bot.commands.get('delete').execute(message,args,master[message.author.id].gbp, master, tracker);
                 break;
                 case 'emojis':
                     bot.commands.get('emojis').execute(message, args, emojisList, bot)
                 break;
-                case 'push': //command that pushes current bot json values to the database
-                    //only lets Colin's discord account run this command
-                    if(message.author.id == '450001712305143869'){
-                        JSON_Overwrite(master, stats_list, tracker, command_stats, emojisList, DATABASEPATH)
-                        message.channel.send("Database has been updated with current values")
-                    }
+                case 'flip': //flips a coin
+                    bot.commands.get('flip').execute(message, master, tracker);
+                break;
+                case 'gg': //game where the user gets three tries to guess a number between 1 and 100
+                    bot.commands.get('gg').execute(message,args,master[message.author.id].gbp, master, stats_list, tracker);
+                    //Gambling Addict Achievement
+                    unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
+                break;
+                case 'help': //gives a list of all commands
+                    bot.commands.get('help').execute(message, args);
+                break;
+                case 'insults': //lets a user check who is being insulted, lets them add and remove people from being insulted
+                    bot.commands.get('insults').execute(message,args, master, tracker);
+                break;
+                case 'kumiko': //sends the user a picture of kumiko from the Sound Euphonium
+                    bot.commands.get('kumiko').execute(message, master, tracker);
+                break;
+                case 'kumikosays': //creates image of kumiko with a speak bubble with user inputted text
+                    bot.commands.get('kumikosays').execute(message, args, bot)
+                break;
+                case 'msg': //lets users make the bot dm a different user
+                    bot.commands.get('msg').execute(message, args, master, bot)
+                break;
+                case 'msgcount': //shows message count leaderboard
+                    bot.commands.get('msgcount').execute(message, args, stats_list);
+                break;
+                case 'names': //lists the names of all users on server
+                    bot.commands.get('names').execute(message,master)
+                break;
+                case 'ping': //lets you ping the bot to see if its running
+                    bot.commands.get('ping').execute(message, buttonJSON);
+                break;
+                case 'powerball': //lets users buy lottery tickets and check stats on it
+                    bot.commands.get('powerball').execute(message,args, master[message.author.id].gbp, master, stats_list, tracker, command_stats)
+                    //Gambling Addict Achievement
+                    unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
                 break;
                 case 'pull': //command that pulls database values and overwrites current bot values
                     //only lets Colin's discord account run this command
@@ -273,9 +240,51 @@ bot.on('messageCreate', message =>{
                         message.channel.send("Bot values have been updated with current Database values")
                     }
                 break;
+                case 'pug': //sends pic of a pug
+                    bot.commands.get('pug').execute(message,master, tracker); 
+                break;
+                case 'push': //command that pushes current bot json values to the database
+                    //only lets Colin's discord account run this command
+                    if(message.author.id == '450001712305143869'){
+                        JSON_Overwrite(master, stats_list, tracker, command_stats, emojisList, DATABASEPATH)
+                        message.channel.send("Database has been updated with current values")
+                    }
+                break;
+                case 'roles': //lists the current role holders on the server
+                    bot.commands.get('roles').execute(message, master)
+                break;
+                case 'roulette': //lets users play roulette
+                    bot.commands.get('roulette').execute(message,args,master, tracker, stats_list, betsOpen, approvedBets)
+                    //Gambling Addict Achievement
+                    unlock.tracker1(message.author.id, 46, 1, message, master, tracker)
+                break;
+                case 'set': //lets me set others gbp values
+                    bot.commands.get('set').execute(message,args, master);
+                break;
+                case 'stats': //lets users check stats associated with their server activity 
+                    bot.commands.get('stats').execute(message,args, master, stats_list);
+                break;
+                case 'steal': //lets users steal gbp from eachother
+                    bot.commands.get('steal').execute(message,args, master, tracker, bot);
+                break;
+                case 'teams': //lets users randomly generate teams
+                    bot.commands.get('teams').execute(message, args, teamsData)
+                break;
                 case 'test': //another command for testing purposes only
                     //bot.commands.get('test').execute(message, args, master, blackJackHands, tracker, stats_list);
                     console.log("Dont worry about it")
+                break;
+                case 'transfer': //lets users transfer gbp between eachother
+                    bot.commands.get('transfer').execute(message,args, master);
+                break;
+                case 'uptime': //shows how long the bot has been online
+                    bot.commands.get('uptime').execute(message, bot);
+                break;
+                case 'version': //shows which release or build is running
+                    bot.commands.get('version').execute(message);
+                break;
+                case '=': //basic calculator
+                    bot.commands.get('=').execute(message, args)
                 break;
                 default:
                     message.channel.send('Use command !help for a list of commands');

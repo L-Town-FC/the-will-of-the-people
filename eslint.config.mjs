@@ -8,7 +8,11 @@ export default [
   },
   {
     files: ["**/*.js"], 
-    languageOptions: {sourceType: "commonjs"}},
+    languageOptions: {sourceType: "commonjs"},
+    rules: {
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
+    }
+  },
   {
     files: ["test/**/*.js"],
     languageOptions: {

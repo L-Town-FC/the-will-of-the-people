@@ -1,7 +1,7 @@
 #!/bin/bash
 echo 'Running buildx for multi-arch build and push'
-. $PWD/scripts/time_info.sh
-. $PWD/scripts/image_version.sh
+. $PWD/scripts/time-info.sh
+. $PWD/scripts/image-version.sh
 
 resolve_image_tags "${1:-}"
 print_image_selection
