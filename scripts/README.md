@@ -24,7 +24,7 @@ For local container workflows, the repository also exposes `make` targets that w
 ## Script Intent
 
 - `build.sh`: build and push a single-architecture image; defaults to `latest` + short SHA or accepts an explicit tag argument
-- `buidx.sh`: build and push a multi-architecture image; defaults to `latest` + short SHA or accepts an explicit tag argument
+- `buildx.sh`: build and push a multi-architecture image; defaults to `latest` + short SHA or accepts an explicit tag argument
 - `deploy_rpi.sh`: connect to the Raspberry Pi host, pull the selected image tag, and restart the bot container
 - `deploy_aws.sh`: legacy AWS deployment path kept in a similar pattern
 - `restart_container.sh`: local helper for pulling and rerunning the container with the expected env vars and volume mount
@@ -64,9 +64,9 @@ The current scripts are mostly used locally and manually today. The likely next 
 
 ## Tagging Behavior
 
-- `scripts/build.sh` and `scripts/buidx.sh` with no argument:
+- `scripts/build.sh` and `scripts/buildx.sh` with no argument:
   publish `latest` and the current short commit SHA, with `APP_VERSION` set to that short SHA
-- `scripts/build.sh v2.2.3` or `scripts/buidx.sh v2.2.3`:
+- `scripts/build.sh v2.2.3` or `scripts/buildx.sh v2.2.3`:
   publish only `v2.2.3`, with `APP_VERSION=v2.2.3`
 - `scripts/deploy_rpi.sh` and `scripts/deploy_aws.sh`:
   deploy the first resolved tag by default, or honor `DEPLOY_TAG` / an explicit tag argument so operators can roll forward or backward intentionally

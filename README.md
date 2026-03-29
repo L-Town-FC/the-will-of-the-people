@@ -81,7 +81,7 @@ npm run lint
 The helper scripts live in `scripts/`:
 
 - `scripts/build.sh`
-- `scripts/buidx.sh`
+- `scripts/buildx.sh`
 - `scripts/deploy_aws.sh`
 - `scripts/deploy_rpi.sh`
 - `scripts/restart_container.sh`

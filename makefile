@@ -29,7 +29,7 @@ build:
 	. ./scripts/build.sh
 
 build_multi_arch:
-	. ./scripts/buidx.sh
+	. ./scripts/buildx.sh
 
 deploy_aws:
 	. ./scripts/deploy_aws.sh
