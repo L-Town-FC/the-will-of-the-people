@@ -1,11 +1,8 @@
 #!/bin/bash
 echo 'Running build and push for single architecture'
 . $PWD/scripts/time_info.sh
+. $PWD/scripts/image_version.sh
 
-repo=atmollohan
-name=bot
-tag=latest
-image_full_tag=$repo/$name:$tag
 env_file_name=.env
 env_file_location=$PWD/$env_file_name
 
@@ -15,8 +12,19 @@ else
     echo "Sourcing .env for build..."
     echo "$env_file_location"
     source "$env_file_location"
+    resolve_image_tags "${1:-}"
+    print_image_selection
+    docker_tag_args=()
+    for tag in "${IMAGE_TAGS[@]}"; do
+        docker_tag_args+=(-t "$repo/$name:$tag")
+    done
     echo 'BUILDING' && \
-    docker build -t $image_full_tag . && \
+    docker build \
+        --build-arg APP_VERSION="$APP_VERSION" \
+        "${docker_tag_args[@]}" \
+        . && \
     echo 'PUSHING to docker hub' && \
-    docker push $image_full_tag
+    for tag in "${IMAGE_TAGS[@]}"; do
+        docker push "$repo/$name:$tag"
+    done
 fi

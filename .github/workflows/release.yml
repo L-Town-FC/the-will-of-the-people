@@ -2,13 +2,14 @@
 # Manual operator flow:
 # 1. Click this workflow and choose patch/minor/major.
 # 2. The current package.json version is published as the Git tag
-#    and GitHub Release.
+#    and GitHub Release, which also triggers the semver image build.
 # 3. Initial release notes are a one-off summary of the latest
 #    updates. Later release notes are generated from the diff since
 #    the last published release tag.
-# 4. The next version bump is opened as a PR instead of pushing
-#    directly to `main` so branch protection stays intact and
-#    semver progression remains reviewable.
+# 4. The next version bump is committed directly to `main` by
+#    automation after the release is published. That requires branch
+#    protection to allow the workflow actor to bypass PR requirements
+#    for this narrow class of version bump commits.
 name: release
 
 "on":
@@ -167,15 +168,6 @@ jobs:
             --title "${{ steps.current.outputs.release_tag }}" \
             --notes-file "${{ steps.notes.outputs.file }}"
 
-      - name: Trigger semver image build
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run buildx.yml \
-            --repo "${{ github.repository }}" \
-            --ref "${{ github.event.repository.default_branch }}" \
-            -f release_tag="${{ steps.current.outputs.release_tag }}"
-
       - name: Bump package versions for the next cycle
         id: next
         shell: bash
@@ -184,56 +176,26 @@ jobs:
           next_version="$(node -p "require('./package.json').version")"
           echo "version=${next_version}" >> "$GITHUB_OUTPUT"
 
-      - name: Create release bump branch
-        id: bump_branch
-        shell: bash
-        run: |
-          branch_name="release/bump-v${{ steps.next.outputs.version }}"
-          git switch -c "${branch_name}"
-          echo "branch=${branch_name}" >> "$GITHUB_OUTPUT"
-
-      - name: Commit and push next version
+      - name: Commit and push next version to main
         run: |
           git add package.json package-lock.json
           git commit \
             -m "chore: bump version to v${{ steps.next.outputs.version }}"
-          git push --force-with-lease \
-            origin "HEAD:${{ steps.bump_branch.outputs.branch }}"
-
-      - name: Open release bump PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          pr_body=$(cat <<EOF
-          Automated post-release version bump after publishing
-          ${{ steps.current.outputs.release_tag }}.
-
-          This keeps \`package.json\` and \`package-lock.json\`
-          moving forward through the normal reviewed PR flow.
-          EOF
-          )
-          gh pr create \
-            --base "${{ github.event.repository.default_branch }}" \
-            --head "${{ steps.bump_branch.outputs.branch }}" \
-            --title \
-            "chore: bump version to v${{ steps.next.outputs.version }}" \
-            --body "$pr_body"
+          git push origin "HEAD:${{ github.event.repository.default_branch }}"
 
       - name: Write release summary
         run: |
           previous_release_label="Previous release tag:"
           next_version_label="Next package.json version:"
-          bump_branch_label="Release bump PR branch:"
           previous_release_tag_value="$(
             printf '%s' "${{ steps.release_state.outputs.tag || 'none' }}"
           )"
           previous_release_tag="${previous_release_tag_value}"
           next_package_version="v${{ steps.next.outputs.version }}"
-          release_bump_branch="${{ steps.bump_branch.outputs.branch }}"
           {
             echo "Released: v${{ steps.current.outputs.version }}"
             echo "${previous_release_label} ${previous_release_tag}"
             echo "${next_version_label} ${next_package_version}"
             echo "Post-release bump type: ${{ inputs.release_type }}"
-            echo "${bump_branch_label} ${release_bump_branch}"
+            echo "Post-release bump delivery: direct push to main"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -226,6 +226,9 @@ bot.on('messageCreate', message =>{
                 case 'uptime': //shows how long the bot has been online
                     bot.commands.get('uptime').execute(message, bot);
                 break;
+                case 'version': //shows which release or build is running
+                    bot.commands.get('version').execute(message);
+                break;
                 case 'msgcount': //shows message count leaderboard
                     bot.commands.get('msgcount').execute(message, args, stats_list);
                 break;

@@ -8,10 +8,10 @@ The bot is built as a Docker image and pushed to Docker Hub. Deployments then pu
 
 Today the rough flow is:
 
-1. Pushes to `main` build both AMD64 and ARM64 images
-2. Those images are pushed to Docker Hub
-3. Runtime hosts pull the latest image
-4. The bot is launched with Docker using the production token and a persistent JSON volume
+1. Normal pushes to `main` build both AMD64 and ARM64 images
+2. Those images are pushed to Docker Hub as `latest` and the short commit SHA
+3. Semver release tags publish only the matching semver image tag
+4. Runtime hosts pull an explicit image tag and launch the bot with Docker using the production token and a persistent JSON volume
 
 ## Infrastructure History
 
@@ -23,12 +23,13 @@ For local container workflows, the repository also exposes `make` targets that w
 
 ## Script Intent
 
-- `build.sh`: build and push a single-architecture image
-- `buidx.sh`: build and push a multi-architecture image
-- `deploy_rpi.sh`: connect to the Raspberry Pi host, pull the latest image, and restart the bot container
+- `build.sh`: build and push a single-architecture image; defaults to `latest` + short SHA or accepts an explicit tag argument
+- `buildx.sh`: build and push a multi-architecture image; defaults to `latest` + short SHA or accepts an explicit tag argument
+- `deploy_rpi.sh`: connect to the Raspberry Pi host, pull the selected image tag, and restart the bot container
 - `deploy_aws.sh`: legacy AWS deployment path kept in a similar pattern
 - `restart_container.sh`: local helper for pulling and rerunning the container with the expected env vars and volume mount
 - `time_info.sh`: lightweight timestamp helper used by the scripts
+- `image_version.sh`: shared helper that resolves `APP_VERSION` and Docker tags for build and deploy scripts
 
 ## Runtime Contract
 
@@ -40,6 +41,10 @@ The bot container is expected to run with:
 - Docker volume: `bot-vol:/usr/src/bot/volume`
 
 That matches how the bot persists its JSON data outside the container filesystem.
+
+The image also bakes in:
+
+- `APP_VERSION` — `vX.Y.Z` for release-tag builds, short commit SHA for normal `main` builds, or `unknown` as a fallback
 
 ## Future Direction
 
@@ -56,3 +61,12 @@ The current scripts are mostly used locally and manually today. The likely next 
 - `make compose_down`: stop the local Docker Compose stack
 - `make compose_restart`: rebuild and restart the bot service with Docker Compose
 - `make compose_logs`: follow the bot service logs
+
+## Tagging Behavior
+
+- `scripts/build.sh` and `scripts/buildx.sh` with no argument:
+  publish `latest` and the current short commit SHA, with `APP_VERSION` set to that short SHA
+- `scripts/build.sh v2.2.3` or `scripts/buildx.sh v2.2.3`:
+  publish only `v2.2.3`, with `APP_VERSION=v2.2.3`
+- `scripts/deploy_rpi.sh` and `scripts/deploy_aws.sh`:
+  deploy the first resolved tag by default, or honor `DEPLOY_TAG` / an explicit tag argument so operators can roll forward or backward intentionally
