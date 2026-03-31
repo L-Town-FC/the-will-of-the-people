@@ -2,14 +2,14 @@
 # Manual operator flow:
 # 1. Click this workflow and choose patch/minor/major.
 # 2. The current package.json version is published as the Git tag
-#    and GitHub Release, which also triggers the semver image build.
+#    and GitHub Release.
 # 3. Initial release notes are a one-off summary of the latest
 #    updates. Later release notes are generated from the diff since
 #    the last published release tag.
-# 4. The next version bump is committed directly to `main` by
-#    automation after the release is published. That requires branch
-#    protection to allow the workflow actor to bypass PR requirements
-#    for this narrow class of version bump commits.
+# 4. Docker image build is triggered and waited on.
+# 5. After image push is confirmed, the next version bump is committed
+#    directly to `main`. The bump is calculated from the latest
+#    release tag, not package.json, for safety.
 name: release
 
 "on":
@@ -185,18 +185,79 @@ jobs:
             --notes-file "${{ steps.notes.outputs.file }}"
 
       - name: Trigger buildx for release tag
+        id: trigger_buildx
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run buildx.yml -f release_tag="${{ steps.current.outputs.release_tag }}"
+          run_id=$(gh workflow run buildx.yml -f release_tag="${{ steps.current.outputs.release_tag }}" --jq '.id')
+          echo "buildx_run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          echo "Triggered buildx workflow: ${run_id}"
 
-      - name: Bump package versions for the next cycle
+      - name: Wait for buildx to complete
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          buildx_run_id="${{ steps.trigger_buildx.outputs.buildx_run_id }}"
+          echo "Waiting for buildx run ${buildx_run_id} to complete..."
+
+          while true; do
+            status=$(gh api "repos/${{ github.repository }}/actions/runs/${buildx_run_id}" --jq '.status')
+            conclusion=$(gh api "repos/${{ github.repository }}/actions/runs/${buildx_run_id}" --jq '.conclusion')
+
+            echo "Status: ${status}, Conclusion: ${conclusion}"
+
+            if [[ "${status}" == "completed" ]]; then
+              if [[ "${conclusion}" == "success" ]]; then
+                echo "Buildx completed successfully!"
+                break
+              else
+                echo "::error::Buildx failed with conclusion: ${conclusion}"
+                exit 1
+              fi
+            fi
+
+            sleep 10
+          done
+
+      - name: Calculate next version from latest release tag
         id: next
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          npm version "${{ inputs.release_type }}" --no-git-tag-version
-          next_version="$(node -p "require('./package.json').version")"
+          release_type="${{ inputs.release_type }}"
+          
+          latest_tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name')
+          echo "Latest release tag: ${latest_tag}"
+          
+          major=$(echo "${latest_tag}" | cut -d. -f1 | tr -d 'v')
+          minor=$(echo "${latest_tag}" | cut -d. -f2)
+          patch=$(echo "${latest_tag}" | cut -d. -f3)
+
+          case "${release_type}" in
+            patch)
+              patch=$((patch + 1))
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+          esac
+
+          next_version="${major}.${minor}.${patch}"
+          echo "Next version: ${next_version}"
           echo "version=${next_version}" >> "$GITHUB_OUTPUT"
+
+      - name: Update package.json to next version
+        shell: bash
+        run: |
+          next_version="${{ steps.next.outputs.version }}"
+          npm version "${next_version}" --no-git-tag-version
 
       - name: Commit and push next version to main
         run: |
