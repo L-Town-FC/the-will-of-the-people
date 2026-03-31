@@ -77,22 +77,33 @@ jobs:
           release_exists="false"
           previous_tag=""
 
+          echo "=== Release State ==="
+          echo "package.json version: ${release_tag}"
+
           if git rev-parse "refs/tags/${release_tag}" >/dev/null 2>&1; then
             tag_exists="true"
+            echo "Git tag: EXISTS"
+          else
+            echo "Git tag: NOT FOUND"
           fi
 
           if gh release view "${release_tag}" >/dev/null 2>&1; then
             release_exists="true"
+            echo "GitHub release: EXISTS"
+          else
+            echo "GitHub release: NOT FOUND"
           fi
 
           if previous_tag="$(
             gh api "repos/${{ github.repository }}/releases/latest" \
               --jq '.tag_name' 2>/dev/null
           )"; then
-            :
+            echo "Latest release: ${previous_tag}"
           else
             previous_tag=""
+            echo "Latest release: none"
           fi
+          echo "====================="
 
           echo "tag_exists=${tag_exists}" >> "$GITHUB_OUTPUT"
           echo "release_exists=${release_exists}" >> "$GITHUB_OUTPUT"
@@ -104,10 +115,15 @@ jobs:
           release_exists="${{ steps.release_state.outputs.release_exists }}"
           release_tag="${{ steps.current.outputs.release_tag }}"
           if [[ "${release_exists}" == "true" ]]; then
-            echo "Release ${release_tag} already exists."
-            echo "Next step: bump package.json and package-lock.json"
-            echo "to the next unreleased version, merge that change,"
-            echo "and rerun this workflow for the new version."
+            echo "::error::Release ${release_tag} already exists!"
+            echo "---"
+            echo "Current package.json version: ${release_tag}"
+            echo "Latest GitHub release: ${release_tag}"
+            echo "---"
+            echo "To create a new release:"
+            echo "  1. Run: npm version patch (or minor/major)"
+            echo "  2. Push the version bump to main"
+            echo "  3. Rerun this workflow"
             exit 1
           fi
 
