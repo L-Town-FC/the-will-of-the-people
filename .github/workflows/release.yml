@@ -190,39 +190,11 @@ jobs:
             --generate-notes
 
       - name: Trigger buildx for release tag
-        id: trigger_buildx
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run_id=$(gh workflow run buildx.yml -f release_tag="${{ steps.current.outputs.release_tag }}" --jq '.id')
-          echo "buildx_run_id=${run_id}" >> "$GITHUB_OUTPUT"
-          echo "Triggered buildx workflow: ${run_id}"
-
-      - name: Wait for buildx to complete
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          buildx_run_id="${{ steps.trigger_buildx.outputs.buildx_run_id }}"
-          echo "Waiting for buildx run ${buildx_run_id} to complete..."
-
-          while true; do
-            status=$(gh api "repos/${{ github.repository }}/actions/runs/${buildx_run_id}" --jq '.status')
-            conclusion=$(gh api "repos/${{ github.repository }}/actions/runs/${buildx_run_id}" --jq '.conclusion')
-
-            echo "Status: ${status}, Conclusion: ${conclusion}"
-
-            if [[ "${status}" == "completed" ]]; then
-              if [[ "${conclusion}" == "success" ]]; then
-                echo "Buildx completed successfully!"
-                break
-              else
-                echo "::error::Buildx failed with conclusion: ${conclusion}"
-                exit 1
-              fi
-            fi
-
-            sleep 10
-          done
+          gh workflow run buildx.yml -f release_tag="${{ steps.current.outputs.release_tag }}"
+          echo "Triggered buildx workflow for ${{ steps.current.outputs.release_tag }}"
 
       - name: Calculate next version from latest release tag
         id: next
