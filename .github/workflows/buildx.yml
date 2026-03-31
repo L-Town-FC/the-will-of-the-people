@@ -14,6 +14,13 @@ name: buildx
     tags:
       - "v*.*.*"
       - "*.*.*"
+    paths-ignore:
+      - ".github/workflows/**"
+      - "test/**"
+      - "**/*.test.js"
+      - "**/*.spec.js"
+      - "**/test_*.js"
+      - "**/__tests__/**"
   workflow_dispatch:
     inputs:
       release_tag:
