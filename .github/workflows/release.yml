@@ -139,10 +139,12 @@ jobs:
           previous_tag="${{ steps.release_state.outputs.tag }}"
           notes_file="$RUNNER_TEMP/release-notes.md"
 
+          echo "Generating notes: current=${current_tag}, previous=${previous_tag}"
+
           {
             echo "# ${current_tag}"
             echo
-            if [[ -n "${previous_tag}" ]]; then
+            if [[ -n "${previous_tag}" ]] && git merge-base --is-ancestor "${previous_tag}" HEAD 2>/dev/null; then
               echo "Changes since ${previous_tag}."
               echo
               echo "Compare:"
@@ -160,7 +162,7 @@ jobs:
               echo "This first release summarizes the latest bot updates."
               echo
               echo "## Latest updates"
-              git log --no-merges --pretty='- %s (%h)' -n 15 "${current_tag}"
+              git log --no-merges --pretty='- %s (%h)' -n 15 HEAD
             fi
           } > "${notes_file}"
 
