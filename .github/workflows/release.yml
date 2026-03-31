@@ -129,7 +129,7 @@ jobs:
 
       - name: Fetch all tags
         run: |
-          git fetch --tags
+          git fetch --tags --force
 
       - name: Generate release notes
         id: notes
