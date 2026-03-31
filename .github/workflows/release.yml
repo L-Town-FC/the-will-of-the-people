@@ -184,6 +184,12 @@ jobs:
             --title "${{ steps.current.outputs.release_tag }}" \
             --notes-file "${{ steps.notes.outputs.file }}"
 
+      - name: Trigger buildx for release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run buildx.yml -f release_tag="${{ steps.current.outputs.release_tag }}"
+
       - name: Bump package versions for the next cycle
         id: next
         shell: bash
