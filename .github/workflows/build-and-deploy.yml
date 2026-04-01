@@ -91,8 +91,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: >-
-        ${{ (github.event.inputs.target == 'rpi5' && 'production') ||
-           'development' }}
+        ${{ (github.event.inputs.target == 'rpi5' && 'prod') ||
+           'dev' }}
     env:
       IMAGE_TAG: >-
         ${{ github.event.inputs.deploy_sha ||
@@ -121,12 +121,10 @@ jobs:
           fi
           if [[ "$TARGET" == "rpi5" ]]; then
             echo "hostname=${{ env.PROD_PI_HOSTNAME }}" >> "$GITHUB_OUTPUT"
-            echo "environment_name=production" >> "$GITHUB_OUTPUT"
-            echo "ssh_user=mollopi5" >> "$GITHUB_OUTPUT"
+            echo "environment_name=prod" >> "$GITHUB_OUTPUT"
           else
             echo "hostname=${{ env.DEV_PI_HOSTNAME }}" >> "$GITHUB_OUTPUT"
-            echo "environment_name=development" >> "$GITHUB_OUTPUT"
-            echo "ssh_user=atmollo" >> "$GITHUB_OUTPUT"
+            echo "environment_name=dev" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Connect to Tailscale
