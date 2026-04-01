@@ -1,0 +1,191 @@
+---
+# Builds and deploys the bot to Pi on push to main.
+# Uses Tailscale for SSH access to the Pi.
+name: build-and-deploy
+
+"on":
+  push:
+    branches: [main]
+    paths-ignore:
+      - ".github/workflows/**"
+      - "test/**"
+      - "**/*.test.js"
+      - "**/*.spec.js"
+      - "**/test_*.js"
+      - "**/__tests__/**"
+  workflow_dispatch:
+    inputs:
+      deploy_sha:
+        description: >-
+          Specific image SHA tag to deploy (e.g., abc1234).
+          If empty, deploys latest tag.
+        required: false
+        type: string
+      dry_run:
+        description: >-
+          If true, only prints commands that would run without executing.
+        required: false
+        type: boolean
+        default: false
+      target:
+        description: "Target Raspberry Pi to deploy"
+        required: false
+        type: choice
+        options:
+          - rpi3
+          - rpi5
+        default: rpi3
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: atmollohan/bot
+  DEV_PI_HOSTNAME: rpi3
+  PROD_PI_HOSTNAME: rpi5
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.prep.outputs.image_tag }}
+      short_sha: ${{ steps.prep.outputs.short_sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Prepare image tags
+        id: prep
+        shell: bash
+        run: |
+          short_sha="${GITHUB_SHA::7}"
+          echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${short_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ steps.prep.outputs.short_sha }}
+          build-args: |
+            APP_VERSION=${{ steps.prep.outputs.short_sha }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: >-
+        ${{ (github.event.inputs.target == 'rpi5' && 'production') ||
+           'development' }}
+    env:
+      IMAGE_TAG: >-
+        ${{ github.event.inputs.deploy_sha ||
+           needs.build.outputs.image_tag }}
+      BOT_TOKEN: >-
+        ${{ (github.event.inputs.target == 'rpi5' &&
+           secrets.PRODBOTTOKEN) || secrets.DEVBOTTOKEN }}
+      DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+    steps:
+      - name: Set image full name
+        id: image
+        run: |
+          img="${{ env.IMAGE_NAME }}"
+          sha="${{ github.event.inputs.deploy_sha ||
+                  needs.build.outputs.image_tag }}"
+          echo "image_full=$img:$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Set target config
+        id: target
+        run: |
+          TARGET="${{ github.event.inputs.target }}"
+          if [[ -z "$TARGET" ]]; then
+            TARGET="rpi3"
+          fi
+          if [[ "$TARGET" == "rpi5" ]]; then
+            echo "hostname=${{ env.PROD_PI_HOSTNAME }}" >> "$GITHUB_OUTPUT"
+            echo "environment_name=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "hostname=${{ env.DEV_PI_HOSTNAME }}" >> "$GITHUB_OUTPUT"
+            echo "environment_name=development" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Verify Tailscale connectivity
+        run: |
+          host="${{ steps.target.outputs.hostname }}"
+          echo "Verifying connectivity to $host..."
+          tailscale ping "$host" || true
+
+      - name: Pull new image
+        if: env.DRY_RUN != 'true'
+        run: |
+          img="${{ steps.image.outputs.image_full }}"
+          host="${{ steps.target.outputs.hostname }}"
+          echo "Pulling $img..."
+          tailscale ssh "$host" "docker pull $img"
+
+      - name: Stop existing container
+        if: env.DRY_RUN != 'true'
+        run: |
+          host="${{ steps.target.outputs.hostname }}"
+          echo "Stopping existing bot container..."
+          tailscale ssh "$host" "docker stop bot || true"
+
+      - name: Start new container
+        if: env.DRY_RUN != 'true'
+        run: |
+          img="${{ steps.image.outputs.image_full }}"
+          host="${{ steps.target.outputs.hostname }}"
+          echo "Starting bot with $img..."
+          tailscale ssh "$host" "
+            docker run -d --restart unless-stopped \
+              -e PRODBOTTOKEN=\$BOT_TOKEN \
+              -e NODE_ENV=production \
+              -e JSONPATH=/usr/src/bot/volume \
+              --name bot \
+              -v bot-vol:/usr/src/bot/volume \
+              $img
+          "
+
+      - name: Verify container is running
+        if: env.DRY_RUN != 'true'
+        run: |
+          host="${{ steps.target.outputs.hostname }}"
+          cmd="docker ps --filter name=bot --format '{{.Status}}'"
+          tailscale ssh "$host" "$cmd"
+
+      - name: Dry-run summary
+        if: env.DRY_RUN == 'true'
+        run: |
+          echo "=== DRY RUN - No changes made ==="
+          echo "Would pull: ${{ steps.image.outputs.image_full }}"
+          echo "Would deploy to: ${{ steps.target.outputs.hostname }}"
+          echo "Would restart container: bot"
+
+      - name: Deployment summary
+        if: env.DRY_RUN != 'true'
+        run: |
+          echo "=== Deployment Complete ==="
+          echo "Image: ${{ steps.image.outputs.image_full }}"
+          echo "Target: ${{ steps.target.outputs.hostname }}"
+          echo "Short SHA: ${{ needs.build.outputs.short_sha }}"

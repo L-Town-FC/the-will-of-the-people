@@ -136,12 +136,13 @@ jobs:
         shell: bash
         run: |
           set +e
-          
+
           current_tag="${{ steps.current.outputs.release_tag }}"
           previous_tag="${{ steps.release_state.outputs.tag }}"
           notes_file="$RUNNER_TEMP/release-notes.md"
 
-          echo "Generating notes: current=${current_tag}, previous=${previous_tag}"
+          echo "Generating notes: current=${current_tag},
+            previous=${previous_tag}"
 
           {
             echo "# ${current_tag}"
@@ -157,7 +158,9 @@ jobs:
               echo
               echo "## Changes"
               git log --no-merges --reverse \
-                --pretty='- %s (%h)' "${previous_tag}..${current_tag}" || echo "(No changes found)"
+                --pretty='- %s (%h)' \
+                "${previous_tag}..${current_tag}" \
+                || echo "(No changes found)"
             else
               echo "Initial release."
               echo
@@ -189,12 +192,12 @@ jobs:
             --notes-file "${{ steps.notes.outputs.file }}" \
             --generate-notes
 
-      - name: Trigger buildx for release tag
+      - name: Trigger build-and-deploy for production
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run buildx.yml -f release_tag="${{ steps.current.outputs.release_tag }}"
-          echo "Triggered buildx workflow for ${{ steps.current.outputs.release_tag }}"
+          gh workflow run build-and-deploy.yml -f target=rpi5 --wait
+          echo "Build-and-deploy completed for rpi5 (production)"
 
       - name: Calculate next version from latest release tag
         id: next
@@ -203,10 +206,11 @@ jobs:
         shell: bash
         run: |
           release_type="${{ inputs.release_type }}"
-          
-          latest_tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name')
+
+          latest_tag=$(gh api "repos/${{ github.repository }}/releases/latest"
+            --jq '.tag_name')
           echo "Latest release tag: ${latest_tag}"
-          
+
           major=$(echo "${latest_tag}" | cut -d. -f1 | tr -d 'v')
           minor=$(echo "${latest_tag}" | cut -d. -f2)
           patch=$(echo "${latest_tag}" | cut -d. -f3)
