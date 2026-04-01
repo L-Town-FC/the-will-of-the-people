@@ -107,7 +107,8 @@ jobs:
         id: deploy
         run: |
           version="${{ steps.current.outputs.version }}"
-          run_id=$(gh workflow run build-and-deploy.yml -f target=rpi5 -f deploy_sha="$version" --json id --jq '.[0].id')
+          run_response=$(gh workflow run build-and-deploy.yml -f target=rpi5 -f deploy_sha="$version")
+          run_id=$(echo "$run_response" | grep -oP 'https://github.com/.*/actions/runs/\K[0-9]+')
           echo "Deployment triggered: ${run_id}"
           echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
 
