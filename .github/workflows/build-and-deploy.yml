@@ -100,6 +100,8 @@ jobs:
       BOT_TOKEN: >-
         ${{ (github.event.inputs.target == 'rpi5' &&
            secrets.PRODBOTTOKEN) || secrets.DEVBOTTOKEN }}
+      NODE_ENV: >-
+        ${{ (github.event.inputs.target == 'rpi5' && 'production') || 'local' }}
       DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
     steps:
       - name: Set image full name
@@ -135,6 +137,8 @@ jobs:
         run: |
           img="${{ steps.image.outputs.image_full }}"
           host="${{ steps.target.outputs.hostname }}"
+          token_name="${{ (github.event.inputs.target == 'rpi5' &&
+                     'PRODBOTTOKEN') || 'DEVBOTTOKEN' }}"
           echo "Deploying $img to $host..."
           tailscale ssh "$host" "
             echo 'Verifying connectivity...' &&
@@ -142,8 +146,8 @@ jobs:
             docker stop bot || true &&
             docker rm bot || true &&
             docker run -d --restart unless-stopped \
-              -e PRODBOTTOKEN=\$BOT_TOKEN \
-              -e NODE_ENV=production \
+              -e NODE_ENV=$NODE_ENV \
+              -e $token_name=\$BOT_TOKEN \
               -e JSONPATH=/usr/src/bot/volume \
               --name bot \
               -v bot-vol:/usr/src/bot/volume \
@@ -151,6 +155,7 @@ jobs:
             echo 'Verifying container...' &&
             docker ps --filter name=bot --format '{{.Status}}'
           "
+          echo "Container deployed successfully"
 
       - name: Dry-run summary
         if: env.DRY_RUN == 'true'
