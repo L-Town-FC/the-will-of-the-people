@@ -71,8 +71,14 @@ jobs:
         shell: bash
         run: |
           short_sha="${GITHUB_SHA::7}"
+          version_tag="${{ github.event.inputs.deploy_sha }}"
+          if [[ -n "$version_tag" && "$version_tag" != "$short_sha" ]]; then
+            image_tag="$version_tag"
+          else
+            image_tag="$short_sha"
+          fi
           echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
-          echo "image_tag=${short_sha}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${image_tag}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -82,9 +88,9 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ steps.prep.outputs.short_sha }}
+            ${{ env.IMAGE_NAME }}:${{ steps.prep.outputs.image_tag }}
           build-args: |
-            APP_VERSION=${{ steps.prep.outputs.short_sha }}
+            APP_VERSION=${{ steps.prep.outputs.image_tag }}
 
   deploy:
     needs: build
