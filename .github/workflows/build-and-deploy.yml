@@ -130,19 +130,14 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      - name: Verify Tailscale connectivity
-        run: |
-          host="${{ steps.target.outputs.hostname }}"
-          echo "Verifying connectivity to $host..."
-          tailscale ping "$host" || true
-
       - name: Deploy container
         if: env.DRY_RUN != 'true'
         run: |
           img="${{ steps.image.outputs.image_full }}"
           host="${{ steps.target.outputs.hostname }}"
           echo "Deploying $img to $host..."
-          tailscale ssh "root@$host" "
+          tailscale ssh "$host" "
+            echo 'Verifying connectivity...' &&
             docker pull $img &&
             docker stop bot || true &&
             docker rm bot || true &&
@@ -152,16 +147,10 @@ jobs:
               -e JSONPATH=/usr/src/bot/volume \
               --name bot \
               -v bot-vol:/usr/src/bot/volume \
-              $img
+              $img &&
+            echo 'Verifying container...' &&
+            docker ps --filter name=bot --format '{{.Status}}'
           "
-          echo "Container deployed successfully"
-
-      - name: Verify container is running
-        if: env.DRY_RUN != 'true'
-        run: |
-          host="${{ steps.target.outputs.hostname }}"
-          cmd="docker ps --filter name=bot --format '{{.Status}}'"
-          tailscale ssh "root@$host" "$cmd"
 
       - name: Dry-run summary
         if: env.DRY_RUN == 'true'
