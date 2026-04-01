@@ -160,6 +160,33 @@ jobs:
           "
           echo "Container deployed successfully"
 
+      - name: Verify bot health
+        if: env.DRY_RUN != 'true'
+        run: |
+          host="${{ steps.target.outputs.hostname }}"
+          user="${{ steps.target.outputs.ssh_user }}"
+          echo "Waiting for bot to initialize..."
+          sleep 10
+          echo "Checking bot status..."
+          tailscale ssh "$user@$host" "
+            status=\$(docker inspect -f '{{.State.Status}}' bot 2>/dev/null)
+            restart_count=\$(docker inspect -f '{{.RestartCount}}' bot \
+              2>/dev/null)
+            echo \"Container status: \$status\"
+            echo \"Restart count: \$restart_count\"
+            if [ \"\$status\" != \"running\" ]; then
+              echo 'ERROR: Container is not running'
+              docker logs bot --tail 20
+              exit 1
+            fi
+            if [ \"\$restart_count\" -gt 3 ]; then
+              echo 'ERROR: Container in restart loop'
+              docker logs bot --tail 20
+              exit 1
+            fi
+            echo 'Bot is healthy'
+          "
+
       - name: Dry-run summary
         if: env.DRY_RUN == 'true'
         run: |
