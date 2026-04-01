@@ -122,9 +122,11 @@ jobs:
           if [[ "$TARGET" == "rpi5" ]]; then
             echo "hostname=${{ env.PROD_PI_HOSTNAME }}" >> "$GITHUB_OUTPUT"
             echo "environment_name=production" >> "$GITHUB_OUTPUT"
+            echo "ssh_user=mollopi5" >> "$GITHUB_OUTPUT"
           else
             echo "hostname=${{ env.DEV_PI_HOSTNAME }}" >> "$GITHUB_OUTPUT"
             echo "environment_name=development" >> "$GITHUB_OUTPUT"
+            echo "ssh_user=atmollo" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Connect to Tailscale
@@ -137,10 +139,11 @@ jobs:
         run: |
           img="${{ steps.image.outputs.image_full }}"
           host="${{ steps.target.outputs.hostname }}"
+          user="${{ steps.target.outputs.ssh_user }}"
           token_name="${{ (github.event.inputs.target == 'rpi5' &&
                      'PRODBOTTOKEN') || 'DEVBOTTOKEN' }}"
           echo "Deploying $img to $host..."
-          tailscale ssh "$host" "
+          tailscale ssh "$user@$host" "
             echo 'Verifying connectivity...' &&
             docker pull $img &&
             docker stop bot || true &&
