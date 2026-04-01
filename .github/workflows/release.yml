@@ -1,30 +1,14 @@
 ---
 # Manual operator flow:
-# 1. Click this workflow and choose patch/minor/major.
-# 2. The current package.json version is published as the Git tag
-#    and GitHub Release.
-# 3. Initial release notes are a one-off summary of the latest
-#    updates. Later release notes are generated from the diff since
-#    the last published release tag.
-# 4. Docker image build is triggered and waited on.
-# 5. After image push is confirmed, the next version bump is committed
-#    directly to `main`. The bump is calculated from the latest
-#    release tag, not package.json, for safety.
+# 1. Create and push a git tag: git tag v2.4.0 && git push origin v2.4.0
+# 2. Run this workflow - it reads the version from the git tag
+# 3. Creates GitHub release and deploys to production
+# 
+# Package.json version is independent - used only for npm dependencies.
 name: release
 
 "on":
   workflow_dispatch:
-    inputs:
-      release_type:
-        description: >-
-          Select how package.json should be bumped after publishing
-          the current version.
-        required: true
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
 
 permissions:
   actions: write
@@ -40,147 +24,76 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout default branch
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: ".nvmrc"
-          cache: npm
-
-      - name: Configure git author
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email \
-            "41898282+github-actions[bot]@users.noreply.github.com"
-
-      - name: Capture release version from package.json
+      - name: Get latest release tag
         id: current
-        shell: bash
         run: |
-          current_version="$(node -p "require('./package.json').version")"
-          echo "version=${current_version}" >> "$GITHUB_OUTPUT"
-          echo "release_tag=v${current_version}" >> "$GITHUB_OUTPUT"
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [[ -z "$tag" ]]; then
+            echo "No tags found. Create one with: git tag v1.0.0 && git push origin v1.0.0"
+            echo "version=" >> "$GITHUB_OUTPUT"
+            echo "release_tag=" >> "$GITHUB_OUTPUT"
+          else
+            version="${tag#v}"
+            echo "version=${version}" >> "$GITHUB_OUTPUT"
+            echo "release_tag=${tag}" >> "$GITHUB_OUTPUT"
+            echo "Found tag: ${tag}"
+          fi
 
-      - name: Inspect current release state
+      - name: Fail if no tag found
+        if: steps.current.outputs.version == ''
+        run: |
+          echo "::error::No git tags found. Create a tag first:"
+          echo "  git tag v1.0.0 && git push origin v1.0.0"
+          exit 1
+
+      - name: Check if release already exists
         id: release_state
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
           release_tag="${{ steps.current.outputs.release_tag }}"
-          tag_exists="false"
-          release_exists="false"
-          previous_tag=""
-
-          echo "=== Release State ==="
-          echo "package.json version: ${release_tag}"
-
-          if git rev-parse "refs/tags/${release_tag}" >/dev/null 2>&1; then
-            tag_exists="true"
-            echo "Git tag: EXISTS"
-          else
-            echo "Git tag: NOT FOUND"
-          fi
-
           if gh release view "${release_tag}" >/dev/null 2>&1; then
-            release_exists="true"
-            echo "GitHub release: EXISTS"
-          else
-            echo "GitHub release: NOT FOUND"
-          fi
-
-          if previous_tag="$(
-            gh api "repos/${{ github.repository }}/releases/latest" \
-              --jq '.tag_name' 2>/dev/null
-          )"; then
-            echo "Latest release: ${previous_tag}"
-          else
-            previous_tag=""
-            echo "Latest release: none"
-          fi
-          echo "====================="
-
-          echo "tag_exists=${tag_exists}" >> "$GITHUB_OUTPUT"
-          echo "release_exists=${release_exists}" >> "$GITHUB_OUTPUT"
-          echo "tag=${previous_tag}" >> "$GITHUB_OUTPUT"
-
-      - name: Fail if release already exists for this tag
-        shell: bash
-        run: |
-          release_exists="${{ steps.release_state.outputs.release_exists }}"
-          release_tag="${{ steps.current.outputs.release_tag }}"
-          if [[ "${release_exists}" == "true" ]]; then
             echo "::error::Release ${release_tag} already exists!"
-            echo "---"
-            echo "Current package.json version: ${release_tag}"
-            echo "Latest GitHub release: ${release_tag}"
-            echo "---"
-            echo "To create a new release:"
-            echo "  1. Run: npm version patch (or minor/major)"
-            echo "  2. Push the version bump to main"
-            echo "  3. Rerun this workflow"
+            echo "Delete it first or use a new version tag."
             exit 1
           fi
-
-      - name: Fetch all tags
-        run: |
-          git fetch --tags --force
+          echo "Release ${release_tag} does not exist - ready to create"
 
       - name: Generate release notes
         id: notes
-        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set +e
-
           current_tag="${{ steps.current.outputs.release_tag }}"
-          previous_tag="${{ steps.release_state.outputs.tag }}"
+          
+          previous_tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+          
           notes_file="$RUNNER_TEMP/release-notes.md"
-
-          echo "Generating notes: current=${current_tag},
-            previous=${previous_tag}"
-
+          
           {
             echo "# ${current_tag}"
             echo
-            if [[ -n "${previous_tag}" ]]; then
+            if [[ -n "$previous_tag" ]] && [[ "$previous_tag" != "$current_tag" ]]; then
               echo "Changes since ${previous_tag}."
               echo
               echo "Compare:"
-              compare_url="https://github.com/${{ github.repository }}"
-              compare_url="${compare_url}/compare/"
-              compare_url="${compare_url}${previous_tag}...${current_tag}"
-              echo "${compare_url}"
+              echo "https://github.com/${{ github.repository }}/compare/${previous_tag}...${current_tag}"
               echo
               echo "## Changes"
-              git log --no-merges --reverse \
-                --pretty='- %s (%h)' \
-                "${previous_tag}..${current_tag}" \
-                || echo "(No changes found)"
+              git log --no-merges --reverse --pretty='- %s (%h)' "${previous_tag}..${current_tag}" 2>/dev/null || echo "(No changes)"
             else
-              echo "Initial release."
+              echo "Initial release"
               echo
-              echo "This first release summarizes the latest bot updates."
-              echo
-              echo "## Latest updates"
+              echo "## Latest changes"
               git log --no-merges --pretty='- %s (%h)' -n 15 HEAD
             fi
           } > "${notes_file}"
-
-          set -e
-
-          if ! grep -q '^- ' "${notes_file}"; then
-            {
-              echo
-              echo \
-                "- No user-facing commits were found in this release range."
-            } >> "${notes_file}"
-          fi
-
+          
           echo "file=${notes_file}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
@@ -192,74 +105,25 @@ jobs:
             --notes-file "${{ steps.notes.outputs.file }}" \
             --generate-notes
 
-      - name: Trigger build-and-deploy for production
+      - name: Trigger production deployment
+        id: deploy
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run build-and-deploy.yml -f target=rpi5 --wait
-          echo "Build-and-deploy completed for rpi5 (production)"
+          version="${{ steps.current.outputs.version }}"
+          run_id=$(gh workflow run build-and-deploy.yml -f target=rpi5 -f deploy_sha="$version" --json id --jq '.[0].id')
+          echo "Deployment triggered: ${run_id}"
+          echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
 
-      - name: Calculate next version from latest release tag
-        id: next
+      - name: Wait for deployment
+        if: steps.deploy.outputs.run_id
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          release_type="${{ inputs.release_type }}"
+          gh run watch "${{ steps.deploy.outputs.run_id }}" --exit-status
 
-          latest_tag=$(gh api "repos/${{ github.repository }}/releases/latest"
-            --jq '.tag_name')
-          echo "Latest release tag: ${latest_tag}"
-
-          major=$(echo "${latest_tag}" | cut -d. -f1 | tr -d 'v')
-          minor=$(echo "${latest_tag}" | cut -d. -f2)
-          patch=$(echo "${latest_tag}" | cut -d. -f3)
-
-          case "${release_type}" in
-            patch)
-              patch=$((patch + 1))
-              ;;
-            minor)
-              minor=$((minor + 1))
-              patch=0
-              ;;
-            major)
-              major=$((major + 1))
-              minor=0
-              patch=0
-              ;;
-          esac
-
-          next_version="${major}.${minor}.${patch}"
-          echo "Next version: ${next_version}"
-          echo "version=${next_version}" >> "$GITHUB_OUTPUT"
-
-      - name: Update package.json to next version
-        shell: bash
+      - name: Summary
         run: |
-          next_version="${{ steps.next.outputs.version }}"
-          npm version "${next_version}" --no-git-tag-version
-
-      - name: Commit and push next version to main
-        run: |
-          git add package.json package-lock.json
-          git commit \
-            -m "chore: bump version to v${{ steps.next.outputs.version }}"
-          git push origin "HEAD:${{ github.event.repository.default_branch }}"
-
-      - name: Write release summary
-        run: |
-          previous_release_label="Previous release tag:"
-          next_version_label="Next package.json version:"
-          previous_release_tag_value="$(
-            printf '%s' "${{ steps.release_state.outputs.tag || 'none' }}"
-          )"
-          previous_release_tag="${previous_release_tag_value}"
-          next_package_version="v${{ steps.next.outputs.version }}"
-          {
-            echo "Released: v${{ steps.current.outputs.version }}"
-            echo "${previous_release_label} ${previous_release_tag}"
-            echo "${next_version_label} ${next_package_version}"
-            echo "Post-release bump type: ${{ inputs.release_type }}"
-            echo "Post-release bump delivery: direct push to main"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "=== Release Complete ==="
+          echo "Version: ${{ steps.current.outputs.release_tag }}"
+          echo "Deployed to: rpi5 (production)"
