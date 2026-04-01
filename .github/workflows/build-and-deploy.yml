@@ -136,28 +136,16 @@ jobs:
           echo "Verifying connectivity to $host..."
           tailscale ping "$host" || true
 
-      - name: Pull new image
+      - name: Deploy container
         if: env.DRY_RUN != 'true'
         run: |
           img="${{ steps.image.outputs.image_full }}"
           host="${{ steps.target.outputs.hostname }}"
-          echo "Pulling $img..."
-          tailscale ssh "$host" "docker pull $img"
-
-      - name: Stop existing container
-        if: env.DRY_RUN != 'true'
-        run: |
-          host="${{ steps.target.outputs.hostname }}"
-          echo "Stopping existing bot container..."
-          tailscale ssh "$host" "docker stop bot || true"
-
-      - name: Start new container
-        if: env.DRY_RUN != 'true'
-        run: |
-          img="${{ steps.image.outputs.image_full }}"
-          host="${{ steps.target.outputs.hostname }}"
-          echo "Starting bot with $img..."
-          tailscale ssh "$host" "
+          echo "Deploying $img to $host..."
+          tailscale ssh "root@$host" "
+            docker pull $img &&
+            docker stop bot || true &&
+            docker rm bot || true &&
             docker run -d --restart unless-stopped \
               -e PRODBOTTOKEN=\$BOT_TOKEN \
               -e NODE_ENV=production \
@@ -166,13 +154,14 @@ jobs:
               -v bot-vol:/usr/src/bot/volume \
               $img
           "
+          echo "Container deployed successfully"
 
       - name: Verify container is running
         if: env.DRY_RUN != 'true'
         run: |
           host="${{ steps.target.outputs.hostname }}"
           cmd="docker ps --filter name=bot --format '{{.Status}}'"
-          tailscale ssh "$host" "$cmd"
+          tailscale ssh "root@$host" "$cmd"
 
       - name: Dry-run summary
         if: env.DRY_RUN == 'true'
