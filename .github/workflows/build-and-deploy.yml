@@ -1,11 +1,13 @@
 ---
-# Builds and deploys the bot to Pi on push to main.
+# Builds and deploys the bot to Pi on push to main or tag push.
 # Uses Tailscale for SSH access to the Pi.
 name: build-and-deploy
 
 "on":
   push:
     branches: [main]
+    tags:
+      - 'v*'
     paths-ignore:
       - ".github/workflows/**"
       - "test/**"
@@ -71,14 +73,24 @@ jobs:
         shell: bash
         run: |
           short_sha="${GITHUB_SHA::7}"
-          version_tag="${{ github.event.inputs.deploy_sha }}"
-          if [[ -n "$version_tag" && "$version_tag" != "$short_sha" ]]; then
-            image_tag="$version_tag"
+          ref="${{ github.ref }}"
+          
+          # Check if this is a tag push
+          if [[ "$ref" == refs/tags/* ]]; then
+            tag_name="${ref#refs/tags/}"
+            # Use semver tag (strip v prefix if present)
+            image_tag="${tag_name#v}"
+          elif [[ -n "${{ github.event.inputs.deploy_sha }}" ]]; then
+            # Manual deployment with deploy_sha
+            image_tag="${{ github.event.inputs.deploy_sha }}"
           else
+            # Regular push to main - use SHA
             image_tag="$short_sha"
           fi
+          
           echo "short_sha=${short_sha}" >> "$GITHUB_OUTPUT"
           echo "image_tag=${image_tag}" >> "$GITHUB_OUTPUT"
+          echo "is_tag_push=$([[ "$ref" == refs/tags/* ]] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
 
       - name: Build and push
         uses: docker/build-push-action@v5
