@@ -17,10 +17,10 @@ name: build-and-deploy
       - "**/__tests__/**"
   workflow_dispatch:
     inputs:
-      deploy_sha:
+      version:
         description: >-
-          Specific image SHA tag to deploy (e.g., abc1234).
-          If empty, deploys latest tag.
+          Image tag to deploy (e.g., 2.4.0, abc1234, latest).
+          If empty, uses git SHA or latest.
         required: false
         type: string
       dry_run:
@@ -80,9 +80,9 @@ jobs:
             tag_name="${ref#refs/tags/}"
             # Use semver tag (strip v prefix if present)
             image_tag="${tag_name#v}"
-          elif [[ -n "${{ github.event.inputs.deploy_sha }}" ]]; then
-            # Manual deployment with deploy_sha
-            image_tag="${{ github.event.inputs.deploy_sha }}"
+          elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+            # Manual deployment with version input
+            image_tag="${{ github.event.inputs.version }}"
           else
             # Regular push to main - use SHA
             image_tag="$short_sha"
@@ -113,7 +113,7 @@ jobs:
            'dev' }}
     env:
       IMAGE_TAG: >-
-        ${{ github.event.inputs.deploy_sha ||
+        ${{ github.event.inputs.version ||
            needs.build.outputs.image_tag }}
       BOT_TOKEN: >-
         ${{ (github.event.inputs.target == 'rpi5' &&
@@ -126,7 +126,7 @@ jobs:
         id: image
         run: |
           img="${{ env.IMAGE_NAME }}"
-          sha="${{ github.event.inputs.deploy_sha ||
+          sha="${{ github.event.inputs.version ||
                   needs.build.outputs.image_tag }}"
           echo "image_full=$img:$sha" >> "$GITHUB_OUTPUT"
 
