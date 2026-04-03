@@ -122,3 +122,32 @@ jobs:
           echo "=== Release Complete ==="
           echo "Version: ${{ steps.current.outputs.release_tag }}"
           echo "Deployed to: rpi5 (production)"
+
+      - name: Post to Discord
+        if: success()
+        run: |
+          VERSION="${{ steps.current.outputs.release_tag }}"
+          RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
+          
+          curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "🍇 The Beast Has Been Unleashed Upon the Realm!",
+                "description": "Version **'"$VERSION"'** has been deployed to the Raspberry Pi. It serves us now... for now. May the realm survive this deployment! 🏰⚔️",
+                "color": 7506394,
+                "fields": [
+                  {
+                    "name": "Release",
+                    "value": "'"$VERSION"'",
+                    "inline": true
+                  },
+                  {
+                    "name": "View Release",
+                    "value": "[GitHub Release]('"${RELEASE_URL}"')",
+                    "inline": true
+                  }
+                ],
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+              }]
+            }'
