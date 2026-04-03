@@ -1,20 +1,9 @@
 ---
-# Builds and deploys the bot to Pi on push to main or tag push.
+# Builds and deploys the bot to Pi on tag push (semver releases).
 # Uses Tailscale for SSH access to the Pi.
 name: build-and-deploy
 
 "on":
-  push:
-    branches: [main]
-    tags:
-      - 'v*'
-    paths-ignore:
-      - ".github/workflows/**"
-      - "test/**"
-      - "**/*.test.js"
-      - "**/*.spec.js"
-      - "**/test_*.js"
-      - "**/__tests__/**"
   workflow_dispatch:
     inputs:
       version:

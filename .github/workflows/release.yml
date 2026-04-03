@@ -136,16 +136,23 @@ jobs:
           VERSION="${{ steps.current.outputs.release_tag }}"
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
           
-          release_notes=$(cat "${{ steps.notes.outputs.file }}")
+          release_notes=$(cat "${{ steps.notes.outputs.file }}" | jq -Rs .)
           
           curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -d "{
               \"embeds\": [{
                 \"title\": \"🚀 New Build Deployed - Based & Operational\",
-                \"description\": \"**${VERSION}** is now live on the Pi. The realm endures. Another W in the bag.\\n\\n${release_notes}\",
+                \"description\": \"**${VERSION}** is now live on the Pi. The realm endures. Another W in the bag.\",
                 \"url\": \"${RELEASE_URL}\",
                 \"color\": 5763714,
+                \"fields\": [
+                  {
+                    \"name\": \"Changes\",
+                    \"value\": ${release_notes},
+                    \"inline\": false
+                  }
+                ],
                 \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
               }]
             }"
