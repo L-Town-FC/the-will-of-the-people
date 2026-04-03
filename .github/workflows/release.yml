@@ -75,6 +75,8 @@ jobs:
           
           notes_file="$RUNNER_TEMP/release-notes.md"
           
+          contributors=$(git log --no-merges --reverse --pretty='%an' "${previous_tag}..${current_tag}" 2>/dev/null | sort -u | tr '\n' ', ' | sed 's/,$//')
+          
           {
             echo "# ${current_tag}"
             echo
@@ -85,12 +87,17 @@ jobs:
               echo "https://github.com/${{ github.repository }}/compare/${previous_tag}...${current_tag}"
               echo
               echo "## Changes"
-              git log --no-merges --reverse --pretty='- %s (%h)' "${previous_tag}..${current_tag}" 2>/dev/null || echo "(No changes)"
+              git log --no-merges --reverse --pretty='- %s (%an, %h)' "${previous_tag}..${current_tag}" 2>/dev/null || echo "(No changes)"
             else
               echo "Initial release"
               echo
               echo "## Latest changes"
-              git log --no-merges --pretty='- %s (%h)' -n 15 HEAD
+              git log --no-merges --pretty='- %s (%an, %h)' -n 15 HEAD
+            fi
+            if [[ -n "$contributors" ]]; then
+              echo
+              echo "## Contributors"
+              echo "$contributors"
             fi
           } > "${notes_file}"
           
@@ -133,9 +140,9 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{
               "embeds": [{
-                "title": "🍇 The Beast Has Been Unleashed Upon the Realm!",
-                "description": "Version **'"$VERSION"'** has been deployed to the Raspberry Pi. It serves us now... for now. May the realm survive this deployment! 🏰⚔️",
-                "color": 7506394,
+                "title": "🚀 New Build Deployed - Based & Operational",
+                "description": "**v$VERSION** is now live on the Pi. The realm endures. Another W in the bag.",
+                "color": 5763714,
                 "fields": [
                   {
                     "name": "Release",
