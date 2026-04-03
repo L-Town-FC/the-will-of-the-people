@@ -67,60 +67,70 @@
     "**!gg status:** Names if anyone is playing and what guess they are on"]
     },
     "13":{
+        "name":"!info",
+        "description":"Shows bot information and system status",
+        "rules":["**!info:** Displays bot version, uptime, memory, and system info"]
+    },
+    "14":{
         "name":"!insults",
         "description":"Allows you to see and set who is being insulted",
         "rules":["**!insults on [person]:** Makes it so the bot insults the specified person. If no user is specified it shows who is currently being insulted", 
             "**!insults off [person]**: Makes it so specified person no longer recieves insults from bot"]
     },
-    "14":{
+    "15":{
         "name":"!kumiko",
         "description":"Posts a picture of Kumiko from the critically acclaimed show Sound! Euphonium\nCosts 15 gbp per use",
         "rules":""
     },
-    "15":{
+    "16":{
         "name": "!kumikosays",
         "description": "Lets you make an image where kumiko says something",
         "rules": ["**!kumikosays [message]:** Sends and image with a specified message"]
     },
-    "16":{
+    "17":{
+        "name": "!logs",
+        "description":"Shows recent bot logs for debugging issues",
+        "rules":["**!logs:** Displays the last 10 log entries"]
+    },
+    "18":{
         "name": "!msg",
         "description": "Lets you pay the bot to dm people for 50gbp",
         "rules": ["**!msg [name] [message]:** Sends your message to the specified person"]
     },
-    "17":{
+    "19":{
         "name":"!msgcount",
         "description":"Shows users ranked by total messages and can show all users",
         "rules":["**!msgcount leaderboard:** Shows top 3 users by total messages","**!msgcount all:** Shows all users sorted by total messages"]
     },
-    "18":{
+    "20":{
         "name":"!names",
         "description":"Lists the names of all the people on the server",
         "rules":""
     },
-    "19":{
+    "21":{
         "name":"!powerball",
         "description":"Enters you into the Powerball for 5 gbp per ticket",
         "rules":["**!powerball buy [Number of Tickets]:** Purchases the nubmer of specified tickets. If no number is specified, it defaults to 1",
             "**!powerball stats:** Shows the number of tickets that have been bought and the amount of gbp in the lottery"]
     },
-    "20":{
+    "22":{
         "name": "!pug",
         "description":"Posts a random pug picture",
         "rules":""
     },
-    "21":{
+    "23":{
         "name": "!roles",
         "description": "Let users check roles",
         "rules": ["**!roles:** Shows you the elecable roles and who currently has them"]
     },
-    "22":{
+    "24":{
         "name":"!roulette",
         "description":"Lets you play roulette with multiple people",
         "rules":["**!roulette bet [Time]:** Starts roulette game where betting ends after [Time] seconds",
             "**!roulette list:** Shows you the roulette board, basics, and payouts",
             "**!roulette numbers:** Shows you the last 10 numbers called"]
     },
-    "23":{
+    "25":{
         "name":"!steal",
         "description":"Steals from selected user",
         "rules":["**!steal [user] [amount to steal]:** Lets you attempt to steal from designated amount from the specified user",
@@ -129,7 +139,7 @@
             "**!steal odds [target] [amount]:** Gives you the odds of failure for a specific target at a specific amount"
         ]
     },
-    "24":{
+    "26":{
         "name":"!teams",
         "description":"Lets you create randomized teams",
         "rules":["**!teams add [person 1] [person 2]... :** Lets you add people to the teams list. Can be done multiple times",
@@ -137,30 +147,20 @@
         "**!teams [number of desired teams]:** Splits the list of people into the desired number of teams",
         "**!teams clear: ** Clears the list of people"]
     },
-    "25":{
+    "27":{
         "name":"!transfer",
         "description":"Allows a user to transfer gbp to another user",
         "rules":["**!transfer [user] [amount]:** Transfer the specified amount of gpb to the specified user",
         "**!transfer [split] [amount] [name 1] [name 2] ...: Lets you split the specified amount evenly between multiple people"]
     },
-    "26":{
+    "28":{
         "name":"!uptime",
         "description":"Shows how long the bot has been online",
         "rules":["**!uptime:** Displays the bot's uptime in days, hours, minutes, and seconds"]
     },
-    "27":{
+    "29":{
         "name":"!version",
         "description":"Shows the version baked into the running bot container",
         "rules":["**!version:** Displays the current APP_VERSION for this running bot instance"]
-    },
-    "28":{
-        "name":"!logs",
-        "description":"Shows recent bot logs for debugging issues",
-        "rules":["**!logs:** Displays the last 10 log entries"]
-    },
-    "29":{
-        "name":"!info",
-        "description":"Shows bot information and system status",
-        "rules":["**!info:** Displays bot version, uptime, memory, and system info"]
     }
 }
