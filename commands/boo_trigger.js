@@ -8,7 +8,7 @@ module.exports = {
             if(message.author.id == boo){
                 if(!message.content.startsWith("!")){
                     var rand = Math.ceil(Math.random() * chance)
-                    if(rand == 2){
+                    if(rand == 4){
                         Trigger(message)
                     }
                 }

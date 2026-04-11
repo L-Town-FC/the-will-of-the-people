@@ -28,6 +28,7 @@ var buttonJSON = {}
 var blackJackHands = {}
 var betsOpen = {value: false}
 var approvedBets = {value: []}
+var messagesSinceLastInsult = {value: 0}
 
 //Checks if the outside container path exists for the RaspberryPi
 //creates it if it doesnt exist
@@ -62,7 +63,9 @@ bot.commands = new Discord.Collection();
 
 const stats = require('./commands/Functions/stats_functions');
 const unlock = require('./commands/Functions/Achievement_Functions');
-const general = require('./commands/Functions/GeneralFunctions')
+const general = require('./commands/Functions/GeneralFunctions');
+const { Console } = require('console');
+const { del } = require('request');
 
 //Pulling data from local jsons that will be written to persistent docker volumes
 
@@ -88,6 +91,7 @@ bot.on('ready', () => {
 
     console.log('This bot is online')
     UpdateEmojiList(emojisList, DATABASEPATH)
+    UpdateUserList(master, DATABASEPATH, tracker, stats_list)
     bot_tinkering.send('The bot is online')    
     new cron.CronJob('0 9 * * *', function(){
         Daily_Functions(channel, master, unlock)
@@ -106,9 +110,20 @@ bot.on('ready', () => {
     }, null, true)
 })
 
+bot.on("guildMemberAdd", member => {
+    try{
+        UpdateUserList(master, DATABASEPATH, tracker, stats_list)
+    }catch(err){
+        console.log(err)
+    }
+})
+
 //event that triggers when a user leaves the server
 bot.on('guildMemberRemove', member =>{
     try{
+        console.log("New user")
+        UpdateUserList(master, DATABASEPATH, tracker, stats_list)
+        RemoveUser(member.id)
         //sends message when a server member leaves the server
         var channel = bot.channels.cache.find(channel => channel.id === '611276436145438769') || bot.channels.cache.find(channel => channel.id === '590585423202484227')
         channel.send(`${master[member.id].name} has left the server`)
@@ -124,7 +139,7 @@ bot.on('messageCreate', message =>{
         if(!message.author.bot){ //filters out bot messages from tracking
             //commmands that ary run every time someone sends a message
             bot.commands.get('more_money').execute(message, master, stats_list, tracker);
-            bot.commands.get('insults_counter').execute(message, master, stats_list);
+            bot.commands.get('insults_counter').execute(message, master, stats_list, messagesSinceLastInsult);
             bot.commands.get('boo_trigger').execute(message, command_stats);
             if(message.author.id !== '712114529458192495' && message.author.id !== '668996755211288595'){
                 stats.tracker(message.author.id, 7, 1, stats_list)
@@ -358,10 +373,10 @@ function Welfare(channel, master){
             if(isNaN(master[i].gbp) == true){
                 master[i].gbp = 0;
             }
-            if(master[i].gbp + master[i].account < 0){
+            if(master[i].gbp < 0){
                 master[i].gbp = master[i].gbp + 250
-            }else if(master[i].gbp + master[i].account < 250){
-                master[i].gbp = 250 - parseFloat(master[i].account)
+            }else if(master[i].gbp < 250){
+                master[i].gbp = 250
             }
         }
         channel.send("Welfare has been distributed")
@@ -504,6 +519,9 @@ function UpdateEmojiList(emojisList, path){
             emojisList[emoji.id] = {name: emoji.name, count: 0}
         }
     })
+
+    RemoveEmojiFromList(emojisList, path) //stops tracking emojis that dont exist anymore
+
     fs.writeFileSync(`${path}/emojis.json`, JSON.stringify(emojisList, null, 2))
     return
 }
@@ -613,4 +631,111 @@ function ButtonInteractions(interaction, buttonJSON, command_stats, stats_list, 
         //content: 'Button'
         embeds: [embedMessage]
     })
+}
+
+async function UpdateUserList(master, path, tracker, stats_list){
+
+    members = await bot.guilds.cache.first().members.fetch()
+
+    //if a user is in the master list but isnt in the server, remove them from the master list
+    for(var user in master){
+        var foundUser = members.find(member => member.id == user)
+        if(foundUser == null){
+            //console.log("No user")
+            delete master[user]
+            delete tracker[user]
+            delete stats_list[user]
+        }
+    }
+
+    //if a user is in the server but isnt in the master list, add them to the master list
+    members.forEach(member => 
+        {
+            //stops bot from being added user in master list
+            if(member.user.bot){
+                return
+            }
+
+            //adds user to master list if they arent already in it
+            if(master[member.id] == null){
+                addPerson(member.id, master, tracker, stats_list)
+            }
+        }
+    )
+    
+    fs.writeFileSync(path + "/master.json", JSON.stringify(master, null, 2))
+    return
+}
+
+function addPerson(id, master, tracker, stats_list){
+    master[id] =  {
+        name: id,
+        gbp: 250,
+        achievements: [],
+        insulted: false,
+        steal: {
+          insurance: 0,
+          attempts: 0,
+          caught: false
+        }
+    }
+    tracker[id] = {
+        name: id,
+        [4]: 0,
+        [5]: 0,
+        [7]: 0,
+        [8]: 0,
+        [9]: 0,
+        [13]: 0,
+        [14]: 0,
+        [15]: [false, false],
+        [17]: 0,
+        [18]: 0,
+        [20]: [false, false],
+        [21]: 0,
+        [23]: 0,
+        [25]: 0,
+        [26]: 0,
+        [27]: 0,
+        [28]: 0,
+        [29]: 0,
+        [31]: 0,
+        [32]: 0,
+        [33]: 0,
+        [36]: 0,
+        [37]: 0,
+        [40]: 0,
+        [39]: [0,0,0],
+        [41]: [false, false, false, false, false, false, false, false],
+        [42]: 0,
+        [43]: 0,
+        [44]: 0,
+        [46]: 0,
+        [47]: 0,
+        [48]: 0
+    }
+    stats_list[id] = {
+        name: id,
+        lottery_tickets : 0,
+        bj_wins : 0,
+        bj_pushes : 0,
+        bj_losses : 0,
+        gg_wins : 0,
+        gg_losses : 0,
+        total_msgs : 0,
+        total_commands : 0,
+        farm_messages : 0,
+        non_farm_messages : 0,
+        achievements : 0,
+        button_presses : 0,
+        button_losses : 0,
+        roulette_bets : 0,
+        roulette_wins : 0
+    }
+
+}
+function RemoveUser(id){
+    delete master[id]
+    delete tracker[id]
+    delete stats_list[id]    
 }

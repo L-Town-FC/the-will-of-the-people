@@ -6,10 +6,10 @@ module.exports = {
         const stats = require('./Functions/stats_functions')
         var amount = 0
         var person = message.author.id
-         
+        
         try{
             if(!master[person]){
-                addPerson(message, master, tracker, stats_list)
+                //addPerson(message, master, tracker, stats_list)
             }
             for(var i in master){
                 if(isNaN(master[i].gbp) == true){
@@ -31,28 +31,29 @@ module.exports = {
                         stats.tracker(person, 10, 1, stats_list)
                     }
                    
-                    var total_assets = master[person].gbp + master[person].account
                     var scaling_modifier = -0.1 * master[person].gbp + 175
                     Achievement_Switch(person, message.channel.id, message, master, tracker)
                     Random_Achievements(person, message, master)
                     amount = 1
-                    if(total_assets < -10000){
+                    if(master[person].gbp < -20000){
+                        amount = 200
+                    }else if(master[person].gbp < -10000){
                         amount = 50
-                    }else if(total_assets < -2500){
+                    }else if(master[person].gbp < -2500){
                         amount = 20
-                    }else if(total_assets < -1000){
+                    }else if(master[person].gbp < -1000){
                         amount = 10
-                    }else if(total_assets < 0){
+                    }else if(master[person].gbp < 0){
                         amount = 5
                         //L Achievement
                         unlock.unlock(person, 3, message, master)
-                    }else if(total_assets < 250){
+                    }else if(master[person].gbp < 250){
                         amount = 3
-                    }else if(total_assets < 500){
+                    }else if(master[person].gbp < 500){
                         amount = 2
-                    }else if(total_assets < 750){
+                    }else if(master[person].gbp < 750){
                         amount = 1
-                    }else if(total_assets < 1500){
+                    }else if(master[person].gbp < 1500){
                         var chance = Math.random() * 100
                         if(chance > scaling_modifier){
                             amount = 0
@@ -145,7 +146,7 @@ function Random_Achievements(user, message, master){
 
 function addPerson(message, master, tracker, stats_list){
     master[message.author.id] =  {
-        name: "Default",
+        name: message.author.id,
         gbp: 250,
         achievements: [],
         insulted: false,
@@ -156,7 +157,7 @@ function addPerson(message, master, tracker, stats_list){
         }
     }
     tracker[message.author.id] = {
-        name: "Default",
+        name: message.author.id,
         [4]: 0,
         [5]: 0,
         [7]: 0,
@@ -191,7 +192,7 @@ function addPerson(message, master, tracker, stats_list){
         [48]: 0
     }
     stats_list[message.author.id] = {
-        name:"Default",
+        name:message.author.id,
         lottery_tickets : 0,
         bj_wins : 0,
         bj_pushes : 0,

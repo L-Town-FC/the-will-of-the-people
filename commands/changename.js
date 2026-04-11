@@ -14,7 +14,7 @@ module.exports = {
                         success = true
                     }
                 }
-                if(success == false){
+                if(!success){
                     message.channel.send(`That user doesn't exist`)
                 }else{
                     message.channel.send('Name updated')

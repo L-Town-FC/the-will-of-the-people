@@ -1,2 +1,6 @@
-**!21 Improvements**
--Blackjack now has a UI instead of having to constantly send commands
+-Decreased boo frequency
+-Decreased insults frequency
+-Added insults
+-Removed copypasta insults
+-Added new poverty tier where if you have less than -20000 gbp, you get 200 gbp per message
+-fixed issue where emoji list didnt cull deleted emojis
