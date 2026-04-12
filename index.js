@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const {GatewayIntentBits, Partials, Client } = require('discord.js');
+require('dotenv').config();
 const bot = new Client({ intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -135,6 +136,7 @@ bot.on('guildMemberRemove', member =>{
 
 //event that triggers every time a message is sent
 bot.on('messageCreate', message =>{
+    console.log(`Message from ${message.author.id} in ${message.channel.id}: ${message.content}`)
     try{
         if(!message.author.bot){ //filters out bot messages from tracking
             //commmands that ary run every time someone sends a message
@@ -157,9 +159,11 @@ bot.on('messageCreate', message =>{
 })
 
 bot.on('messageCreate', message =>{    
+    console.log(`Processing command: ${message.content}`)
     try{
         let args = message.content.substring(PREFIX.length).split(" ");
         if (message.content.startsWith("!") == true){ //only runs a command if it starts with an "!"
+            console.log(`Command detected: ${args[0]}`)
             if(message.author.id !== '712114529458192495' && message.author.id !== '668996755211288595'){ //668996755211288595 is the prod bot, 712114529458192495 is dev bot. only commands run by actual users are stat tracked
                 stats.tracker(message.author.id, 8, 1, stats_list) //total commands stat tracker
             }
@@ -359,6 +363,7 @@ bot.on('emojiDelete', emojiDelete => {
 bot.on('interactionCreate', interaction => {
     try{
         ButtonInteractions(interaction, buttonJSON, command_stats, stats_list, master, tracker)
+        HelpInteractions(interaction, master)
     }catch(err){
         console.log(err)
         interaction.message.channel.send('Error occurred with button interaction')
@@ -631,6 +636,40 @@ function ButtonInteractions(interaction, buttonJSON, command_stats, stats_list, 
         //content: 'Button'
         embeds: [embedMessage]
     })
+}
+
+function HelpInteractions(interaction, _master){
+    const fs = require('fs')
+    const embed = require('./commands/Functions/embed_functions')
+    const help = JSON.parse(fs.readFileSync('./JSON/help.json', 'utf-8'))
+    const { HelpEmbed, HelpSelectMenu } = require('./commands/help')
+
+    if(interaction.customId === 'help_list'){
+        HelpEmbed(interaction.message, help)
+        return
+    }
+
+    if(interaction.customId === 'help_menu'){
+        HelpSelectMenu(interaction.message, help)
+        interaction.message.delete()
+        return
+    }
+
+    if(interaction.customId === 'help_select'){
+        var selectedCmdNum = interaction.values[0]
+        var selectedCmd = help[selectedCmdNum]
+        if(selectedCmd){
+            var title = `**${selectedCmd.name}**`
+            var description = selectedCmd.description
+            var fields = {name: '**Commands**', value: ""}
+            if(selectedCmd.rules !== ""){
+                fields.value = selectedCmd.rules.join("\n")
+            }
+            const embedMessage = embed.EmbedCreator(interaction.message, title, description, fields)
+            interaction.update({ embeds: [embedMessage], components: [] })
+        }
+        return
+    }
 }
 
 async function UpdateUserList(master, path, tracker, stats_list){
