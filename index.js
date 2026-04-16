@@ -639,7 +639,7 @@ function ButtonInteractions(interaction, buttonJSON, command_stats, stats_list, 
 
 async function UpdateUserList(master, path, tracker, stats_list){
 
-    members = await bot.guilds.cache.first().members.fetch()
+    const members = await bot.guilds.cache.first().members.fetch()
 
     //if a user is in the master list but isnt in the server, remove them from the master list
     for(var user in master){
