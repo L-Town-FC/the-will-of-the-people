@@ -65,8 +65,6 @@ bot.commands = new Discord.Collection();
 const stats = require('./commands/Functions/stats_functions');
 const unlock = require('./commands/Functions/Achievement_Functions');
 const general = require('./commands/Functions/GeneralFunctions');
-const { Console } = require('console');
-const { del } = require('request');
 
 //Pulling data from local jsons that will be written to persistent docker volumes
 
@@ -111,7 +109,7 @@ bot.on('ready', () => {
     }, null, true)
 })
 
-bot.on("guildMemberAdd", member => {
+bot.on("guildMemberAdd", _member => {
     try{
         UpdateUserList(master, DATABASEPATH, tracker, stats_list)
     }catch(err){

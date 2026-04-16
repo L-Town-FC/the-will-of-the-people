@@ -2,7 +2,6 @@ module.exports = {
     name: 'insults_counter',
     description: 'insults you accordingly',
     execute(message, master, stats_list, messagesSinceLastInsult){
-        const fs = require('fs')
         var minimumMessagesBetweenInsults = 5;
         if(message.author.bot){
             return
