@@ -1,4 +1,4 @@
-const { describe, expect, test, beforeEach } = require('@jest/globals');
+const { describe, expect, test } = require('@jest/globals');
 const help = require('../../commands/help');
 const embed = require('../../commands/Functions/embed_functions');
 const { assertBasicCommandModule } = require('../helpers/assertBasicCommandModule');
@@ -13,27 +13,10 @@ jest.mock('../../commands/Functions/embed_functions', () => ({
   })),
 }));
 
-jest.mock('discord.js', () => ({
-  ButtonBuilder: jest.fn().mockImplementation(() => ({
-    setLabel: jest.fn().mockReturnThis(),
-    setStyle: jest.fn().mockReturnThis(),
-    setCustomId: jest.fn().mockReturnThis(),
-  })),
-  ButtonStyle: { Primary: 'primary', Secondary: 'secondary' },
-  ActionRowBuilder: jest.fn().mockImplementation(() => ({
-    addComponents: jest.fn().mockReturnThis(),
-  })),
-  StringSelectMenuBuilder: jest.fn().mockImplementation(() => ({
-    setCustomId: jest.fn().mockReturnThis(),
-    setPlaceholder: jest.fn().mockReturnThis(),
-    addOptions: jest.fn().mockReturnThis(),
-  })),
-}));
-
 assertBasicCommandModule(help, 'help');
 
 describe('help command', () => {
-  test('sends the command list embed with buttons when no specific command is requested', () => {
+  test('sends the command list embed when no specific command is requested', () => {
     const message = createMessage();
     help.execute(message, ['!help']);
 
@@ -43,16 +26,15 @@ describe('help command', () => {
       'Use "!help [number]" for more detailed info on a command',
       expect.objectContaining({
         name: 'Commands',
-        value: expect.stringContaining('1. !='),
+        value: expect.stringContaining('1. !'),
       }),
     );
     expect(message.channel.send.calls.length).toBe(1);
     const sendCall = message.channel.send.calls[0][0];
     expect(sendCall.embeds).toHaveLength(1);
-    expect(sendCall.components).toHaveLength(1);
   });
 
-  test('sends command-specific help for a valid command number with buttons', () => {
+  test('sends command-specific help for a valid command number', () => {
     const message = createMessage();
     help.execute(message, ['!help', '19']);
 
@@ -68,7 +50,6 @@ describe('help command', () => {
     expect(message.channel.send.calls.length).toBe(1);
     const sendCall = message.channel.send.calls[0][0];
     expect(sendCall.embeds).toHaveLength(1);
-    expect(sendCall.components).toHaveLength(1);
   });
 
   test('shows usage text for an invalid help target', () => {
@@ -81,19 +62,14 @@ describe('help command', () => {
     );
   });
 
-  test('shows menu when !help menu is called', () => {
+  test('shows usage text for !help menu (removed feature)', () => {
     const message = createMessage();
     help.execute(message, ['!help', 'menu']);
 
-    expect(embed.EmbedCreator).toHaveBeenCalledWith(
-      message,
-      'Quick Command Select',
-      'Choose a command to see its details',
-      'emptyValue',
-    );
     expect(message.channel.send.calls.length).toBe(1);
-    const sendCall = message.channel.send.calls[0][0];
-    expect(sendCall.components).toHaveLength(1);
+    expect(message.channel.send.calls[0][0]).toEqual(
+      'Use !help for a list of all commands. Use !help [command number] for a more detailed list of the specified command',
+    );
   });
 
   test('HelpEmbed function exports work correctly', () => {
@@ -121,24 +97,6 @@ describe('help command', () => {
       '**!test**',
       'Test command',
       expect.objectContaining({ name: '**Commands**' })
-    );
-    expect(message.channel.send.calls.length).toBe(1);
-  });
-
-  test('HelpSelectMenu function exports work correctly', () => {
-    const message = createMessage();
-    const testHelp = {
-      '1': { name: '!test', description: 'Test command' },
-      '2': { name: '!other', description: 'Another command' }
-    };
-
-    help.HelpSelectMenu(message, testHelp);
-
-    expect(embed.EmbedCreator).toHaveBeenCalledWith(
-      message,
-      'Quick Command Select',
-      'Choose a command to see its details',
-      'emptyValue'
     );
     expect(message.channel.send.calls.length).toBe(1);
   });

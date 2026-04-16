@@ -8,8 +8,6 @@ module.exports = {
         try{
             if(!args[1]){
                 HelpEmbed(message, help)
-            }else if(args[1] === 'menu'){
-                HelpSelectMenu(message, help)
             }else if(parseInt(args[1]) == parseFloat(args[1]) && args[1] > 0 && args[1] <= length){
                 CommandHelpEmbed(message, help, args)
             }else{
@@ -21,13 +19,11 @@ module.exports = {
         }
     },
     HelpEmbed,
-    HelpSelectMenu,
     CommandHelpEmbed
 }
 
 function HelpEmbed(message, helpJSON){
     const embed = require('./Functions/embed_functions')
-    const {ButtonBuilder, ButtonStyle, ActionRowBuilder} = require('discord.js')
 
     var list = ""
 
@@ -40,20 +36,12 @@ function HelpEmbed(message, helpJSON){
     var fields = {name: "Commands", value: list}
     const embedMessage = embed.EmbedCreator(message, title, description, fields)
     
-    const menuButton = new ButtonBuilder()
-        .setLabel('Quick Select')
-        .setStyle(ButtonStyle.Primary)
-        .setCustomId('help_menu')
-
-    const row = new ActionRowBuilder().addComponents(menuButton)
-    
-    message.channel.send({ embeds: [embedMessage], components: [row] });
+    message.channel.send({ embeds: [embedMessage] });
     return
 }
 
 function CommandHelpEmbed(message, helpJSON, args){
     const embed = require('./Functions/embed_functions')
-    const {ButtonBuilder, ButtonStyle, ActionRowBuilder} = require('discord.js')
     var title = `**${helpJSON[args[1]].name}**`
     var description = helpJSON[args[1]].description
     var fields = {name: '**Commands**', value: ""}
@@ -69,41 +57,6 @@ function CommandHelpEmbed(message, helpJSON, args){
     }
     const embedMessage = embed.EmbedCreator(message, title, description, fields)
 
-    const listButton = new ButtonBuilder()
-        .setLabel('All Commands')
-        .setStyle(ButtonStyle.Primary)
-        .setCustomId('help_list')
-
-    const row = new ActionRowBuilder().addComponents(listButton)
-
-    message.channel.send({embeds: [embedMessage], components: [row]})
-    return
-}
-
-function HelpSelectMenu(message, helpJSON){
-    const embed = require('./Functions/embed_functions')
-    const {StringSelectMenuBuilder, ActionRowBuilder} = require('discord.js')
-
-    var options = []
-    for(var i in helpJSON){
-        options.push({
-            label: helpJSON[i].name,
-            description: helpJSON[i].description.substring(0, 100),
-            value: i
-        })
-    }
-
-    const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId('help_select')
-        .setPlaceholder('Select a command')
-        .addOptions(options)
-
-    const row = new ActionRowBuilder().addComponents(selectMenu)
-
-    const title = "Quick Command Select"
-    var description = "Choose a command to see its details"
-    const embedMessage = embed.EmbedCreator(message, title, description, embed.emptyValue)
-
-    message.channel.send({ embeds: [embedMessage], components: [row] })
+    message.channel.send({embeds: [embedMessage]})
     return
 }

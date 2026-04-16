@@ -363,7 +363,6 @@ bot.on('emojiDelete', emojiDelete => {
 bot.on('interactionCreate', interaction => {
     try{
         ButtonInteractions(interaction, buttonJSON, command_stats, stats_list, master, tracker)
-        HelpInteractions(interaction, master)
     }catch(err){
         console.log(err)
         interaction.message.channel.send('Error occurred with button interaction')
@@ -636,40 +635,6 @@ function ButtonInteractions(interaction, buttonJSON, command_stats, stats_list, 
         //content: 'Button'
         embeds: [embedMessage]
     })
-}
-
-function HelpInteractions(interaction, _master){
-    const fs = require('fs')
-    const embed = require('./commands/Functions/embed_functions')
-    const help = JSON.parse(fs.readFileSync('./JSON/help.json', 'utf-8'))
-    const { HelpEmbed, HelpSelectMenu } = require('./commands/help')
-
-    if(interaction.customId === 'help_list'){
-        HelpEmbed(interaction.message, help)
-        return
-    }
-
-    if(interaction.customId === 'help_menu'){
-        HelpSelectMenu(interaction.message, help)
-        interaction.message.delete()
-        return
-    }
-
-    if(interaction.customId === 'help_select'){
-        var selectedCmdNum = interaction.values[0]
-        var selectedCmd = help[selectedCmdNum]
-        if(selectedCmd){
-            var title = `**${selectedCmd.name}**`
-            var description = selectedCmd.description
-            var fields = {name: '**Commands**', value: ""}
-            if(selectedCmd.rules !== ""){
-                fields.value = selectedCmd.rules.join("\n")
-            }
-            const embedMessage = embed.EmbedCreator(interaction.message, title, description, fields)
-            interaction.update({ embeds: [embedMessage], components: [] })
-        }
-        return
-    }
 }
 
 async function UpdateUserList(master, path, tracker, stats_list){
