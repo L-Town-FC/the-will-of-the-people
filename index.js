@@ -1,5 +1,6 @@
 const Discord = require('discord.js');
 const {GatewayIntentBits, Partials, Client } = require('discord.js');
+require('dotenv').config();
 const bot = new Client({ intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
@@ -64,8 +65,6 @@ bot.commands = new Discord.Collection();
 const stats = require('./commands/Functions/stats_functions');
 const unlock = require('./commands/Functions/Achievement_Functions');
 const general = require('./commands/Functions/GeneralFunctions');
-const { Console } = require('console');
-const { del } = require('request');
 
 //Pulling data from local jsons that will be written to persistent docker volumes
 
@@ -110,7 +109,7 @@ bot.on('ready', () => {
     }, null, true)
 })
 
-bot.on("guildMemberAdd", member => {
+bot.on("guildMemberAdd", _member => {
     try{
         UpdateUserList(master, DATABASEPATH, tracker, stats_list)
     }catch(err){
@@ -135,6 +134,7 @@ bot.on('guildMemberRemove', member =>{
 
 //event that triggers every time a message is sent
 bot.on('messageCreate', message =>{
+    console.log(`Message from ${message.author.id} in ${message.channel.id}: ${message.content}`)
     try{
         if(!message.author.bot){ //filters out bot messages from tracking
             //commmands that ary run every time someone sends a message
@@ -157,9 +157,11 @@ bot.on('messageCreate', message =>{
 })
 
 bot.on('messageCreate', message =>{    
+    console.log(`Processing command: ${message.content}`)
     try{
         let args = message.content.substring(PREFIX.length).split(" ");
         if (message.content.startsWith("!") == true){ //only runs a command if it starts with an "!"
+            console.log(`Command detected: ${args[0]}`)
             if(message.author.id !== '712114529458192495' && message.author.id !== '668996755211288595'){ //668996755211288595 is the prod bot, 712114529458192495 is dev bot. only commands run by actual users are stat tracked
                 stats.tracker(message.author.id, 8, 1, stats_list) //total commands stat tracker
             }
@@ -635,7 +637,7 @@ function ButtonInteractions(interaction, buttonJSON, command_stats, stats_list, 
 
 async function UpdateUserList(master, path, tracker, stats_list){
 
-    members = await bot.guilds.cache.first().members.fetch()
+    const members = await bot.guilds.cache.first().members.fetch()
 
     //if a user is in the master list but isnt in the server, remove them from the master list
     for(var user in master){

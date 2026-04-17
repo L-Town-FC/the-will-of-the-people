@@ -17,7 +17,9 @@ module.exports = {
             console.log(err)
             message.channel.send('Error occured in help.js')
         }
-    }
+    },
+    HelpEmbed,
+    CommandHelpEmbed
 }
 
 function HelpEmbed(message, helpJSON){
@@ -30,9 +32,10 @@ function HelpEmbed(message, helpJSON){
     }
 
     var title = "List of Commands"
-    var description = `Use "!help [number]" for more detailed list of specificied command`
+    var description = `Use "!help [number]" for more detailed info on a command`
     var fields = {name: "Commands", value: list}
     const embedMessage = embed.EmbedCreator(message, title, description, fields)
+    
     message.channel.send({ embeds: [embedMessage] });
     return
 }
@@ -53,6 +56,7 @@ function CommandHelpEmbed(message, helpJSON, args){
         fields = embed.emptyValue
     }
     const embedMessage = embed.EmbedCreator(message, title, description, fields)
+
     message.channel.send({embeds: [embedMessage]})
     return
 }

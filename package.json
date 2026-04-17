@@ -7,7 +7,7 @@
     "clean": "rm -rf node_modules package-lock.json",
     "lint": "eslint .",
     "start": "node index.js",
-    "start:dev": "NODE_ENV=local nodemon index.js",
+    "start:dev": "NODE_ENV=local node -r dotenv/config index.js dotenv_config_path=local.dev.env",
     "start:local": "NODE_ENV=local node index.js",
     "test": "jest test",
     "test:coverage": "jest test --coverage"
@@ -17,6 +17,7 @@
   "dependencies": {
     "cron": "^3.1.7",
     "discord.js": "^14.15.2",
+    "dotenv": "^16.6.1",
     "jimp": "^0.22.12",
     "request": "^2.88.0"
   },
