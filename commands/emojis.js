@@ -1,29 +1,36 @@
 module.exports = {
     name: 'emojis',
     description: 'gives server emoji statistics',
-    execute(message, args, emojisList, bot){
-        //var discordEmojisStruct = Array.from(message.guild.emojis.cache)
-        var emojisListArray = []
-        
-        //const emoji = bot.emojis.cache.get(discordEmojisStruct[0][0])
-        emojisListArray = EmojiListSort(emojisList)
+    execute
+}
 
-        if(args.length < 2){
-            //Gives top 5 and bottom 5 emojis
-            EmojiUsageList(message, emojisListArray, bot)
-            return
-        }
-        
-        //need to turn args[1] into its own variable to use ToLowerCase()
-        var command = args[1];
-        if(command.toString().toLowerCase() == "all"){
-            AllEmojiUsageList(message, emojisListArray, bot)
-            return
-        }
+function execute(message, args, emojisList, bot){
+    //var discordEmojisStruct = Array.from(message.guild.emojis.cache)
+    var emojisListArray = []
+    
+    //const emoji = bot.emojis.cache.get(discordEmojisStruct[0][0])
+    emojisListArray = EmojiListSort(emojisList)
 
-        HelpEmbed(message)
+    if(args.length < 2){
+        //Gives top 5 and bottom 5 emojis
+        EmojiUsageList(message, emojisListArray, bot)
         return
     }
+    
+    //need to turn args[1] into its own variable to use ToLowerCase()
+    var command = args[1];
+    if(command.toString().toLowerCase() == "all"){
+        AllEmojiUsageList(message, emojisListArray, bot)
+        return
+    }
+
+    if(command.toString().toLowerCase() == "unused"){
+        UnusedEmojiList(message, emojisListArray, bot)
+        return
+    }
+
+    HelpEmbed(message)
+    return
 }
 
 function EmojiUsageList(message, emojiListArray, bot){
@@ -33,16 +40,16 @@ function EmojiUsageList(message, emojiListArray, bot){
     
     //grabs the first 5 emojis of the sorted emoji array and lists them and their counts in order
     var topFive = {name: "Top Five Emoji Reactions",value: []}
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 5; i++) {
         //bot.emoji.. converts emoji id into actual emoji
-        topFive.value[i] =  `${i}. ${bot.emojis.cache.get(emojiListArray[i][0])} - ${emojiListArray[i][1].count}`
+        topFive.value[i] =  `${i + 1}. ${bot.emojis.cache.get(emojiListArray[i][0])} - ${emojiListArray[i][1].count}`
     }
     var bottomFive = {name: "Bottom Five Emoji Reactions", value: []}
 
     //having it be "value of" is absolute necessity for this. Kept counting updward from 6 instead of downward
     //this loops over the sorted list and then adds the emoji plus the number of times its been used to a field object to be sent later
     var counter = 0
-    for (i = emojiListArray.length - 1; i > emojiListArray.length - 11; i--) {
+    for (i = emojiListArray.length - 1; i > emojiListArray.length - 6; i--) {
         //bot.emoji.. converts emoji id into actual emoji
        bottomFive.value[counter] =  `${(i + 1).valueOf()} . ${bot.emojis.cache.get(emojiListArray[i][0])} - ${emojiListArray[i][1].count}`
        counter++
@@ -88,9 +95,30 @@ function HelpEmbed(message){
     var title = "List of Emoji Commands"
     var description = [
         "!emojis: Lists the top 5 and bottom 5 emojis based on their reaction usage",
-        "!emojis all: Lists all emojis are their reaction usage in one list"
+        "!emojis all: Lists all emojis are their reaction usage in one list",
+        "!emojis unused: Lists emojis with 0 usage for cleanup"
     ]
     var fields = embed.emptyValue
+
+    const embedMessage = embed.EmbedCreator(message, title, description, fields)
+    message.channel.send({embeds: [embedMessage]})
+}
+
+function UnusedEmojiList(message, emojiListArray, bot){
+    const embed = require('./Functions/embed_functions')
+
+    var unused = []
+    var counter = 0
+    for (var i = emojiListArray.length - 1; i >= 0; i--) {
+        if(emojiListArray[i][1].count === 0){
+            unused[counter] = `${bot.emojis.cache.get(emojiListArray[i][0])} - ${emojiListArray[i][1].count}`
+            counter++
+        }
+    }
+
+    var title = "Unused Emoji Reactions (0 Usage)"
+    var description = embed.emptyValue
+    var fields = {name: "Unused Emojis", value: unused.length > 0 ? unused : ["No unused emojis found"]}
 
     const embedMessage = embed.EmbedCreator(message, title, description, fields)
     message.channel.send({embeds: [embedMessage]})
@@ -115,3 +143,7 @@ function EmojiListSort(emojisList){
     
     return array.sort((a,b) => b[1].count - a[1].count)
 }
+
+module.exports.EmojiListSort = EmojiListSort
+module.exports.EmojiListCreate = EmojiListCreate
+module.exports.UnusedEmojiList = UnusedEmojiList

@@ -52,7 +52,8 @@
         "name": "!emojis",
         "description": "Lets users track reaction usages",
         "rules": ["**!emojis:** Lists the top 5 and bottom 5 emojis based on their reaction usage",
-        "**!emojis all:** Lists all emojis are their reaction usage in one list"]
+        "**!emojis all:** Lists all emojis are their reaction usage in one list",
+        "**!emojis unused:** Lists emojis with 0 usage for cleanup"]
     },
     "11":{
         "name": "!flip",
