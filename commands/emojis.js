@@ -29,7 +29,7 @@ function execute(message, args, emojisList, bot){
         return
     }
 
-    message.channel.send('Use !help 10 for emojis command help')
+    HelpEmbed(message)
     return
 }
 
@@ -87,6 +87,21 @@ function AllEmojiUsageList(message, emojiListArray, bot){
         message.channel.send({embeds: [embedMessage]})
     }
 
+}
+
+function HelpEmbed(message){
+    const embed = require('./Functions/embed_functions')
+
+    var title = "List of Emoji Commands"
+    var description = [
+        "!emojis: Lists the top 5 and bottom 5 emojis based on their reaction usage",
+        "!emojis all: Lists all emojis are their reaction usage in one list",
+        "!emojis unused: Lists emojis with 0 usage for cleanup"
+    ]
+    var fields = embed.emptyValue
+
+    const embedMessage = embed.EmbedCreator(message, title, description, fields)
+    message.channel.send({embeds: [embedMessage]})
 }
 
 function UnusedEmojiList(message, emojiListArray, bot){
