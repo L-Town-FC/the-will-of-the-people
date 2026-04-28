@@ -1,15 +1,18 @@
 ---
 # Release flow:
-# 1. Run this workflow (no inputs required)
-# 2. Auto-detects next version based on commits since last release
-# 3. Creates git tag, GitHub release with clickable links, and deploys to production
-# 4. Skips if no changes detected
-#
+# 1. Run this workflow with a version (e.g., v2.4.0)
+# 2. Creates git tag, GitHub release, and deploys to production
+# 
 # Package.json version is independent - used only for npm dependencies.
 name: release
 
 "on":
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 2.4.0)'
+        required: true
+        type: string
 
 permissions:
   actions: write
@@ -34,93 +37,29 @@ jobs:
           fetch-depth: 0
           token: ${{ github.token }}
 
-      - name: Get latest release tag
-        id: latest
+      - name: Set version variables
+        id: current
         run: |
-          latest_tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
-          echo "tag=${latest_tag}" >> "$GITHUB_OUTPUT"
-          echo "Latest release tag: ${latest_tag:-none}"
-
-      - name: Check for changes
-        id: changes
-        run: |
-          latest_tag="${{ steps.latest.outputs.tag }}"
-          
-          if [[ -n "$latest_tag" ]]; then
-            commit_count=$(git log --no-merges --oneline "${latest_tag}..HEAD" 2>/dev/null | wc -l)
-          else
-            commit_count=$(git log --no-merges --oneline -n 50 HEAD 2>/dev/null | wc -l)
-          fi
-          
-          echo "commit_count=${commit_count}" >> "$GITHUB_OUTPUT"
-          
-          if [[ "$commit_count" -eq 0 ]]; then
-            echo "::warning::No changes detected since last release. Skipping."
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "Found ${commit_count} new commits"
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Determine next version
-        if: steps.changes.outputs.has_changes == 'true'
-        id: version
-        run: |
-          latest_tag="${{ steps.latest.outputs.tag }}"
-          
-          # Parse latest version or start at 0.0.0
-          if [[ -n "$latest_tag" ]]; then
-            latest_version="${latest_tag#v}"
-            IFS='.' read -r major minor patch <<< "$latest_version"
-          else
-            major=0
-            minor=0
-            patch=0
-          fi
-          
-          # Analyze commits to determine bump type
-          if [[ -n "$latest_tag" ]]; then
-            commits=$(git log --no-merges --pretty='%s' "${latest_tag}..HEAD" 2>/dev/null)
-          else
-            commits=$(git log --no-merges --pretty='%s' -n 50 HEAD 2>/dev/null)
-          fi
-          
-          # Check for breaking changes, features, or fixes
-          if echo "$commits" | grep -qE '^(feat|fix|chore|docs|style|refactor|perf|test)(\([^)]+\))?:.*!'; then
-            # Breaking change - major bump
-            major=$((major + 1))
-            minor=0
-            patch=0
-          elif echo "$commits" | grep -qE '^feat(\([^)]+\))?:'; then
-            # New feature - minor bump
-            minor=$((minor + 1))
-            patch=0
-          else
-            # Default - patch bump
-            patch=$((patch + 1))
-          fi
-          
-          new_version="${major}.${minor}.${patch}"
-          new_tag="v${new_version}"
-          
-          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
-          echo "tag=${new_tag}" >> "$GITHUB_OUTPUT"
-          echo "New version: ${new_tag} (from ${latest_tag:-initial})"
+          version="${{ inputs.version }}"
+          release_tag="v${version}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
+          echo "Releasing version: ${release_tag}"
 
       - name: Check if release already exists
-        if: steps.changes.outputs.has_changes == 'true'
+        id: release_state
         run: |
-          release_tag="${{ steps.version.outputs.tag }}"
+          release_tag="${{ steps.current.outputs.release_tag }}"
           if gh release view "${release_tag}" >/dev/null 2>&1; then
             echo "::error::Release ${release_tag} already exists!"
+            echo "Delete it first or use a new version."
             exit 1
           fi
           echo "Release ${release_tag} does not exist - ready to create"
 
       - name: Create and push tag
-        if: steps.changes.outputs.has_changes == 'true'
         run: |
-          release_tag="${{ steps.version.outputs.tag }}"
+          release_tag="${{ steps.current.outputs.release_tag }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "$release_tag" -m "Release $release_tag"
@@ -128,59 +67,54 @@ jobs:
           echo "Pushed tag: ${release_tag}"
 
       - name: Generate release notes
-        if: steps.changes.outputs.has_changes == 'true'
         id: notes
         run: |
-          current_tag="${{ steps.version.outputs.tag }}"
-          previous_tag="${{ steps.latest.outputs.tag }}"
+          current_tag="${{ steps.current.outputs.release_tag }}"
+          
+          previous_tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
           
           notes_file="$RUNNER_TEMP/release-notes.md"
-          repo="${{ github.repository }}"
+          
+          contributors=$(git log --no-merges --reverse --pretty='%aL' "${previous_tag}..${current_tag}" 2>/dev/null | sort -u | tr '\n' ', ' | sed 's/,$//')
           
           {
             echo "# ${current_tag}"
             echo
-            
-            if [[ -n "$previous_tag" ]]; then
-              echo "Changes since **${previous_tag}**."
+            if [[ -n "$previous_tag" ]] && [[ "$previous_tag" != "$current_tag" ]]; then
+              echo "Changes since ${previous_tag}."
               echo
-              echo "**Compare:** [${previous_tag}...${current_tag}](https://github.com/${repo}/compare/${previous_tag}...${current_tag})"
+              echo "Compare:"
+              echo "https://github.com/${{ github.repository }}/compare/${previous_tag}...${current_tag}"
               echo
               echo "## Changes"
-              echo
-              git log --no-merges --reverse --pretty=format:'- %s ([%aL](https://github.com/%aL), [%h](https://github.com/'"${repo}"'/commit/%H))' "${previous_tag}..${current_tag}" 2>/dev/null || echo "(No changes)"
+              git log --no-merges --reverse --pretty='- %s (@%aL, %h)' "${previous_tag}..${current_tag}" 2>/dev/null || echo "(No changes)"
             else
               echo "Initial release"
               echo
               echo "## Latest changes"
-              echo
-              git log --no-merges --reverse --pretty=format:'- %s ([%aL](https://github.com/%aL), [%h](https://github.com/'"${repo}"'/commit/%H))' -n 15 HEAD
+              git log --no-merges --pretty='- %s (@%aL, %h)' -n 15 HEAD
             fi
-            
-            echo
-            echo
-            echo "## Contributors"
-            echo
-            git log --no-merges --reverse --pretty='%aL' "${previous_tag}..${current_tag}" 2>/dev/null | sort -u | while read -r user; do
-              echo "- [@${user}](https://github.com/${user})"
-            done
+            if [[ -n "$contributors" ]]; then
+              echo
+              echo "## Contributors"
+              echo "$contributors"
+            fi
           } > "${notes_file}"
           
           echo "file=${notes_file}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
-        if: steps.changes.outputs.has_changes == 'true'
         run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --title "${{ steps.version.outputs.tag }}" \
-            --notes-file "${{ steps.notes.outputs.file }}"
+          gh release create "${{ steps.current.outputs.release_tag }}" \
+            --title "${{ steps.current.outputs.release_tag }}" \
+            --notes-file "${{ steps.notes.outputs.file }}" \
+            --generate-notes
 
       - name: Trigger production deployment
-        if: steps.changes.outputs.has_changes == 'true'
         id: deploy
         run: |
-          version="${{ steps.version.outputs.version }}"
-          release_tag="${{ steps.version.outputs.tag }}"
+          version="${{ steps.current.outputs.version }}"
+          release_tag="${{ steps.current.outputs.release_tag }}"
           run_response=$(gh workflow run build-and-deploy.yml -f target=rpi5 -f version="$version" -r "$release_tag")
           run_id=$(echo "$run_response" | grep -oP 'https://github.com/.*/actions/runs/\K[0-9]+')
           echo "Deployment triggered: ${run_id}"
@@ -193,19 +127,14 @@ jobs:
 
       - name: Summary
         run: |
-          if [[ "${{ steps.changes.outputs.has_changes }}" == "true" ]]; then
-            echo "=== Release Complete ==="
-            echo "Version: ${{ steps.version.outputs.tag }}"
-            echo "Deployed to: rpi5 (production)"
-          else
-            echo "=== Release Skipped ==="
-            echo "No changes detected since last release."
-          fi
+          echo "=== Release Complete ==="
+          echo "Version: ${{ steps.current.outputs.release_tag }}"
+          echo "Deployed to: rpi5 (production)"
 
       - name: Post to Discord
-        if: steps.changes.outputs.has_changes == 'true' && success()
+        if: success()
         run: |
-          VERSION="${{ steps.version.outputs.tag }}"
+          VERSION="${{ steps.current.outputs.release_tag }}"
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
           
           release_notes=$(cat "${{ steps.notes.outputs.file }}" | jq -Rs .)
@@ -228,8 +157,3 @@ jobs:
                 \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
               }]
             }"
-
-      - name: No changes notification
-        if: steps.changes.outputs.has_changes != 'true'
-        run: |
-          echo "::notice::No new changes to release. Workflow complete."
