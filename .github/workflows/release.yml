@@ -1,23 +1,25 @@
 ---
 # Release flow:
-# 1. Run this workflow with a version (e.g., v2.4.0)
-# 2. Creates git tag, GitHub release, and deploys to production
+# 1. Manual button click (workflow_dispatch, no inputs)
+# 2. Auto-detect version bump from conventional commits
+# 3. Guard against no changes since last release
+# 4. Create git tag, GitHub release, and deploy to production
 # 
+# Version bump rules:
+# - Major: Commits with BREAKING CHANGE or !: (e.g., feat!: new API)
+# - Minor: Commits with feat: prefix
+# - Patch: All other commits (fix:, chore:, etc.)
+#
 # Package.json version is independent - used only for npm dependencies.
 name: release
 
 "on":
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., 2.4.0)'
-        required: true
-        type: string
+    # No inputs - simple button click to trigger release
 
 permissions:
   actions: write
   contents: write
-  pull-requests: write
 
 env:
   GH_TOKEN: ${{ github.token }}
@@ -37,29 +39,92 @@ jobs:
           fetch-depth: 0
           token: ${{ github.token }}
 
-      - name: Set version variables
-        id: current
+      - name: Compute version bump
+        id: version
         run: |
-          version="${{ inputs.version }}"
-          release_tag="v${version}"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          # Get last release tag
+          last_tag=$(git tag --sort=-v:refname | head -n1 2>/dev/null || echo "")
+          
+          # Get commits since last release
+          if [ -z "$last_tag" ]; then
+            commits=$(git log --oneline)
+          else
+            commits=$(git log --oneline ${last_tag}..HEAD)
+          fi
+          
+          # Guard against no changes
+          if [ -z "$commits" ]; then
+            echo "::error::No changes since last release (${last_tag}). Aborting release."
+            exit 1
+          fi
+          
+          # Determine version bump type
+          bump="patch"
+          has_major=0
+          has_minor=0
+          
+          # Check for major changes: BREAKING CHANGE in body or !: in subject
+          if [ -n "$last_tag" ]; then
+            breaking=$(git log ${last_tag}..HEAD --format="%B" | grep -E 'BREAKING CHANGE' || true)
+            if [ -n "$breaking" ] || echo "$commits" | grep -qE '!:' ; then
+              has_major=1
+            fi
+          else
+            breaking=$(git log --format="%B" | grep -E 'BREAKING CHANGE' || true)
+            if [ -n "$breaking" ] || echo "$commits" | grep -qE '!:' ; then
+              has_major=1
+            fi
+          fi
+          
+          # Check for minor changes: feat commits
+          if echo "$commits" | grep -qE '^[a-f0-9]+ feat:' ; then
+            has_minor=1
+          fi
+          
+          if [ $has_major -eq 1 ]; then
+            bump="major"
+          elif [ $has_minor -eq 1 ]; then
+            bump="minor"
+          fi
+          
+          # Compute new version
+          if [ -z "$last_tag" ]; then
+            new_version="1.0.0"
+          else
+            version_num=${last_tag#v}
+            IFS='.' read -r major minor patch <<< "$version_num"
+            case $bump in
+              major)
+                new_version="$((major + 1)).0.0"
+                ;;
+              minor)
+                new_version="${major}.$((minor + 1)).0"
+                ;;
+              patch)
+                new_version="${major}.${minor}.$((patch + 1))"
+                ;;
+            esac
+          fi
+          
+          release_tag="v${new_version}"
+          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
           echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
-          echo "Releasing version: ${release_tag}"
+          echo "last_tag=${last_tag}" >> "$GITHUB_OUTPUT"
 
       - name: Check if release already exists
         id: release_state
         run: |
-          release_tag="${{ steps.current.outputs.release_tag }}"
+          release_tag="${{ steps.version.outputs.release_tag }}"
           if gh release view "${release_tag}" >/dev/null 2>&1; then
             echo "::error::Release ${release_tag} already exists!"
-            echo "Delete it first or use a new version."
+            echo "Delete it first or trigger a new release with new commits."
             exit 1
           fi
           echo "Release ${release_tag} does not exist - ready to create"
 
       - name: Create and push tag
         run: |
-          release_tag="${{ steps.current.outputs.release_tag }}"
+          release_tag="${{ steps.version.outputs.release_tag }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "$release_tag" -m "Release $release_tag"
@@ -69,13 +134,26 @@ jobs:
       - name: Generate release notes
         id: notes
         run: |
-          current_tag="${{ steps.current.outputs.release_tag }}"
-          
-          previous_tag=$(gh api "repos/${{ github.repository }}/releases/latest" --jq '.tag_name' 2>/dev/null || echo "")
+          current_tag="${{ steps.version.outputs.release_tag }}"
+          previous_tag="${{ steps.version.outputs.last_tag }}"
           
           notes_file="$RUNNER_TEMP/release-notes.md"
+          commits_file="$RUNNER_TEMP/commits.json"
           
-          contributors=$(git log --no-merges --reverse --pretty='%aL' "${previous_tag}..${current_tag}" 2>/dev/null | sort -u | tr '\n' ', ' | sed 's/,$//')
+          # Get commits with GitHub usernames via API
+          if [ -n "$previous_tag" ]; then
+            gh api "repos/${{ github.repository }}/compare/${previous_tag}...${current_tag}" \
+              --jq '.commits | map({message: .commit.message, sha: .sha, login: (.author.login // "unknown")})' \
+              > "$commits_file" 2>/dev/null || echo "[]" > "$commits_file"
+          else
+            gh api "repos/${{ github.repository }}/commits?per_page=15" \
+              --jq 'map({message: .commit.message, sha: .sha, login: (.author.login // "unknown")})' \
+              > "$commits_file" 2>/dev/null || echo "[]" > "$commits_file"
+          fi
+          
+          # Build contributors and changelog
+          contributors=$(jq -r 'map(.login) | unique | join(", ")' "$commits_file")
+          changelog=$(jq -r '.[] | "- " + (.message | gsub("\n"; " ") | split(" ")[0:15] | join(" ")) + " ([@" + .login + "](https://github.com/" + .login + ")), [" + (.sha[0:7]) + "](https://github.com/${{ github.repository }}/commit/" + .sha + ")"' "$commits_file")
           
           {
             echo "# ${current_tag}"
@@ -83,18 +161,15 @@ jobs:
             if [[ -n "$previous_tag" ]] && [[ "$previous_tag" != "$current_tag" ]]; then
               echo "Changes since ${previous_tag}."
               echo
-              echo "Compare:"
-              echo "https://github.com/${{ github.repository }}/compare/${previous_tag}...${current_tag}"
+              echo "**Compare:** [${previous_tag}...${current_tag}](https://github.com/${{ github.repository }}/compare/${previous_tag}...${current_tag})"
               echo
-              echo "## Changes"
-              git log --no-merges --reverse --pretty='- %s (@%aL, %h)' "${previous_tag}..${current_tag}" 2>/dev/null || echo "(No changes)"
             else
               echo "Initial release"
               echo
-              echo "## Latest changes"
-              git log --no-merges --pretty='- %s (@%aL, %h)' -n 15 HEAD
             fi
-            if [[ -n "$contributors" ]]; then
+            echo "## Changes"
+            echo "$changelog"
+            if [[ -n "$contributors" ]] && [[ "$contributors" != "null" ]]; then
               echo
               echo "## Contributors"
               echo "$contributors"
@@ -105,55 +180,68 @@ jobs:
 
       - name: Create GitHub release
         run: |
-          gh release create "${{ steps.current.outputs.release_tag }}" \
-            --title "${{ steps.current.outputs.release_tag }}" \
-            --notes-file "${{ steps.notes.outputs.file }}" \
-            --generate-notes
+          gh release create "${{ steps.version.outputs.release_tag }}" \
+            --title "${{ steps.version.outputs.release_tag }}" \
+            --notes-file "${{ steps.notes.outputs.file }}"
 
       - name: Trigger production deployment
         id: deploy
         run: |
-          version="${{ steps.current.outputs.version }}"
-          release_tag="${{ steps.current.outputs.release_tag }}"
-          run_response=$(gh workflow run build-and-deploy.yml -f target=rpi5 -f version="$version" -r "$release_tag")
-          run_id=$(echo "$run_response" | grep -oP 'https://github.com/.*/actions/runs/\K[0-9]+')
-          echo "Deployment triggered: ${run_id}"
-          echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          version="${{ steps.version.outputs.version }}"
+          release_tag="${{ steps.version.outputs.release_tag }}"
+          gh workflow run build-and-deploy.yml -f target=rpi5 -f version="$version" -f ref="$release_tag"
+          echo "Waiting for workflow to be queued..."
+          # Poll for the workflow run to appear (timeout after 30s)
+          run_id=""
+          for i in $(seq 1 6); do
+            sleep 5
+            run_id=$(gh run list --workflow=build-and-deploy.yml --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "")
+            if [ -n "$run_id" ] && [ "$run_id" != "null" ]; then
+              echo "Deployment triggered: ${run_id}"
+              echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+              break
+            fi
+            echo "Still waiting for workflow run... (attempt $i)"
+          done
+          if [ -z "$run_id" ] || [ "$run_id" == "null" ]; then
+            echo "::error::Failed to get workflow run ID"
+            exit 1
+          fi
 
       - name: Wait for deployment
         if: steps.deploy.outputs.run_id
         run: |
           gh run watch "${{ steps.deploy.outputs.run_id }}" --exit-status
 
-      - name: Summary
-        run: |
-          echo "=== Release Complete ==="
-          echo "Version: ${{ steps.current.outputs.release_tag }}"
-          echo "Deployed to: rpi5 (production)"
-
       - name: Post to Discord
         if: success()
         run: |
-          VERSION="${{ steps.current.outputs.release_tag }}"
+          VERSION="${{ steps.version.outputs.release_tag }}"
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
           
-          release_notes=$(cat "${{ steps.notes.outputs.file }}" | jq -Rs .)
+          # Get release notes content (truncate to fit Discord 1024 char limit)
+          changes=$(head -c 900 "${{ steps.notes.outputs.file }}")
+          
+          # Build JSON payload using jq for proper encoding
+          jq -n \
+            --arg title "🚀 New Build Deployed - Based & Operational" \
+            --arg desc "**${VERSION}** is now live on the Pi. The realm endures. Another W in the bag.\n\nCheck out the [release notes](${RELEASE_URL}) for details." \
+            --arg changes "$changes" \
+            '{
+              "embeds": [{
+                "title": $title,
+                "description": $desc,
+                "url": $RELEASE_URL,
+                "color": 5763714,
+                "fields": [{
+                  "name": "Changes",
+                  "value": $changes,
+                  "inline": false
+                }],
+                "timestamp": (now | todate)
+              }]
+            }' > /tmp/discord_payload.json
           
           curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"embeds\": [{
-                \"title\": \"🚀 New Build Deployed - Based & Operational\",
-                \"description\": \"**${VERSION}** is now live on the Pi. The realm endures. Another W in the bag.\",
-                \"url\": \"${RELEASE_URL}\",
-                \"color\": 5763714,
-                \"fields\": [
-                  {
-                    \"name\": \"Changes\",
-                    \"value\": ${release_notes},
-                    \"inline\": false
-                  }
-                ],
-                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
-              }]
-            }"
+            -d @/tmp/discord_payload.json
