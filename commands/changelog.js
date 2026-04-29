@@ -39,12 +39,12 @@ module.exports = {
                             changelogText = changelogText.substring(0, 1021) + '...';
                         }
                         
-                        var fields = [{
+                        var field = {
                             name: 'Changes in ' + release.tag_name,
                             value: changelogText
-                        }];
+                        };
                         
-                        var embedMessage = embed.EmbedCreator(message, 'Changelog', 'Released on ' + new Date(release.published_at).toLocaleDateString(), fields);
+                        var embedMessage = embed.EmbedCreator(message, 'Changelog', 'Released on ' + new Date(release.published_at).toLocaleDateString(), field);
                         
                         message.channel.send({ embeds: [embedMessage] });
                         
