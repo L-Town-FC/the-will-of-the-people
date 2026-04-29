@@ -1,5 +1,8 @@
 # The Will of the People
 
+[![Tests](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/pr-checks.yml)
+[![Release](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/release.yml/badge.svg)](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/release.yml)
+
 Part joke, part institution, this bot became the engine of the server's economy, the house behind its casino, and the voice of its occasional cruelty. Some might even call it a monster. What started as a bit slowly turned into a shared system everyone pushed, tested, argued with, and added to until it became, in its own strange way, the collective will of the people.
 
 ## What it does
