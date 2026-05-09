@@ -70,24 +70,47 @@ jobs:
           npm run test:coverage --
           --coverageReporters=text-summary
           --coverageReporters=json-summary
+          --json
+          --outputFile=test-results/jest-results.json
 
-      - name: Print coverage and commit info
+      - name: Print coverage and test summary
         run: |
           node <<'NODE'
           const fs = require("fs");
           const summary = JSON.parse(
             fs.readFileSync("coverage/coverage-summary.json", "utf8")
           );
+          const results = JSON.parse(
+            fs.readFileSync("test-results/jest-results.json", "utf8")
+          );
           const totals = summary.total;
           const sha = process.env.GITHUB_SHA;
+          const passed = results.numPassedTests;
+          const failed = results.numFailedTests;
+          const suites = results.numTotalTestSuites;
           const message = [
-            "PR checks complete",
-            `Commit: ${sha}`,
-            `Coverage: statements ${totals.statements.pct}% | ` +
-              `branches ${totals.branches.pct}% | ` +
-              `functions ${totals.functions.pct}% | ` +
-              `lines ${totals.lines.pct}%`,
+            "## PR Checks Summary",
+            `**Commit:** \`${sha}\``,
+            "",
+            "### Tests",
+            `**${results.numTotalTests}** total, **${passed}** passed, **${failed}** failed, **${results.numPendingTests}** pending across **${suites}** suites`,
+            "",
+            "### Coverage",
+            `**Statements:** ${totals.statements.pct}% | ` +
+              `**Branches:** ${totals.branches.pct}% | ` +
+              `**Functions:** ${totals.functions.pct}% | ` +
+              `**Lines:** ${totals.lines.pct}%`,
           ].join("\n");
           console.log(message);
-          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${message}\n`);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\n${message}\n`);
           NODE
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            test-results/
+            coverage/
+          retention-days: 30

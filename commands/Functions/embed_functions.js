@@ -61,7 +61,7 @@ function EmbedCreator(message, title, description, fields){
                         //when the sub field is an object it needs to be converted into a string
                         //this goes through the indices of the subfield and appends them onto a string with a line break inbetween
                         temp = ""
-                        for (var j = 0; j < fields[i].value.length; j++) {
+                        for (let j = 0; j < fields[i].value.length; j++) {
                             temp += fields[i].value[j] + "\n"
                         }
                         fields[i].value = temp
@@ -76,7 +76,7 @@ function EmbedCreator(message, title, description, fields){
                 }else{
                     //if a field has only single subfield but its values are object the above process is done to ensure the value is a string
                     temp = ""
-                    for (j = 0; j < fields.value.length; j++) {
+                    for (let j = 0; j < fields.value.length; j++) {
                         temp += fields.value[j] + "\n"
                     }
                     fields.value = temp
