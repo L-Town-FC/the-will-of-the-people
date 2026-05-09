@@ -1,0 +1,61 @@
+name: Coverage Badge
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: |
+          npm run test:coverage 2>&1 | tee coverage-output.txt
+
+      - name: Extract coverage percentage
+        id: coverage
+        run: |
+          PCT=$(grep '^All files' coverage-output.txt | awk '{print $4}' | tr -d '|' | head -1)
+          echo "pct=$PCT" >> "$GITHUB_OUTPUT"
+          PCT_NUM=$(echo "$PCT" | sed 's/%//')
+          if (( $(echo "$PCT_NUM >= 50" | bc -l) )); then
+            COLOR="brightgreen"
+          elif (( $(echo "$PCT_NUM >= 25" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$PCT_NUM >= 10" | bc -l) )); then
+            COLOR="yellow"
+          else
+            COLOR="red"
+          fi
+          echo "color=$COLOR" >> "$GITHUB_OUTPUT"
+
+      - name: Update coverage-badge.json
+        run: |
+          echo '{
+            "schemaVersion": 1,
+            "label": "coverage",
+            "message": "'${{ steps.coverage.outputs.pct }}'",
+            "color": "'${{ steps.coverage.outputs.color }}'"
+          }' > coverage-badge.json
+
+      - name: Commit and push badge
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add coverage-badge.json
+          git diff --staged --quiet || git commit -m 'ci: update coverage badge [skip ci]'
+          git push
