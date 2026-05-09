@@ -57,3 +57,18 @@ compose-logs:
 
 compose-down:
 	docker compose down
+
+compose-dev-pull:
+	docker compose -f docker-compose.dev.yml pull
+
+compose-dev-up:
+	docker compose -f docker-compose.dev.yml up -d --pull missing
+
+compose-dev-restart:
+	docker compose -f docker-compose.dev.yml up -d --pull always
+
+compose-dev-logs:
+	docker compose -f docker-compose.dev.yml logs -f bot
+
+compose-dev-down:
+	docker compose -f docker-compose.dev.yml down
