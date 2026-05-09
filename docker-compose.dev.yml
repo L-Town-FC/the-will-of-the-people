@@ -1,0 +1,13 @@
+services:
+  bot:
+    container_name: bot-dev
+    image: ghcr.io/l-town-fc/the-will-of-the-people:latest
+    restart: unless-stopped
+    env_file: local.dev.env
+    environment:
+      NODE_ENV: local
+    volumes:
+      - bot-dev-vol:/usr/src/bot/volume
+
+volumes:
+  bot-dev-vol:
