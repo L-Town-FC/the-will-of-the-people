@@ -356,12 +356,13 @@ jobs:
           jq -n \
             --arg title "🚀 New Build Deployed - Based & Operational" \
             --arg desc "**${VERSION}** is now live on the production Pi (rpi5). The realm endures. Another W in the bag.\n\nCheck out the [release notes](${RELEASE_URL}) for details.${{ github.event.inputs.deploy_dev == 'true' && '\n\n*Also deployed to dev (rpi3).*' || '' }}" \
+            --arg url "$RELEASE_URL" \
             --arg changes "$changes" \
             '{
               "embeds": [{
                 "title": $title,
                 "description": $desc,
-                "url": $RELEASE_URL,
+                "url": $url,
                 "color": 5763714,
                 "fields": [{
                   "name": "Changes",
