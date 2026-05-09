@@ -42,7 +42,7 @@ npm run lint              # lint codebase
 
 ## Building and deploying
 
-Docker images are published to GHCR (`ghcr.io/L-Town-FC/the-will-of-the-people`):
+Docker images are published to GHCR (`ghcr.io/l-town-fc/the-will-of-the-people`):
 
 ```bash
 make build         # build and push single-arch

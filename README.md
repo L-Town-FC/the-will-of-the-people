@@ -92,7 +92,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for full details.
 
 ## Deployment
 
-Docker images are published to **GitHub Container Registry** (`ghcr.io/L-Town-FC/the-will-of-the-people`) — no Docker Hub credentials needed.
+Docker images are published to **GitHub Container Registry** (`ghcr.io/l-town-fc/the-will-of-the-people`) — no Docker Hub credentials needed.
 
 ### Release workflow
 
