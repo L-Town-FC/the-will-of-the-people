@@ -8,6 +8,8 @@ permissions:
 jobs:
   set-visibility:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Make GHCR package public
         run: |
