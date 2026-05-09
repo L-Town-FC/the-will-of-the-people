@@ -23,6 +23,23 @@ jobs:
           node-version-file: ".nvmrc"
           cache: npm
 
+      - name: Validate PR title follows Conventional Commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if ! echo "$PR_TITLE" | grep -qE \
+            '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\([^()]+\))?!?:\s.+'; then
+            echo "::error::PR title does not follow Conventional Commits format."
+            echo "::error::Expected: <type>(<scope>)!: <description>"
+            echo "::error::Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert"
+            echo "::error::Examples:"
+            echo "::error::  feat: add new feature"
+            echo "::error::  fix(api): handle edge case"
+            echo "::error::  docs: update README"
+            exit 1
+          fi
+          echo "PR title follows Conventional Commits: ${PR_TITLE}"
+
       - name: Print package and runtime info
         run: |
           echo "package name: $(node -p "require('./package.json').name")"

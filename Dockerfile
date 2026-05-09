@@ -1,5 +1,5 @@
 # Pull base node image
-FROM node:22.19.0
+FROM node:24.15.0
 
 ARG APP_VERSION=unknown
 

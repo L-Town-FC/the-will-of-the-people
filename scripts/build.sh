@@ -23,7 +23,7 @@ else
         --build-arg APP_VERSION="$APP_VERSION" \
         "${docker_tag_args[@]}" \
         . && \
-    echo 'PUSHING to docker hub' && \
+    echo "PUSHING to ${repo}/$name" && \
     for tag in "${IMAGE_TAGS[@]}"; do
         docker push "$repo/$name:$tag"
     done

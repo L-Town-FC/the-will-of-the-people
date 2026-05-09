@@ -1,21 +1,32 @@
 ---
 # Release flow:
-# 1. Manual button click (workflow_dispatch, no inputs)
-# 2. Auto-detect version bump from conventional commits
+# 1. Manual button click (workflow_dispatch, optional dry_run input)
+# 2. Auto-detect version bump — checks PR semver labels first, then falls
+#    back to conventional commit analysis.
 # 3. Guard against no changes since last release
 # 4. Create git tag, GitHub release, and deploy to production
-# 
-# Version bump rules:
-# - Major: Commits with BREAKING CHANGE or !: (e.g., feat!: new API)
-# - Minor: Commits with feat: prefix
-# - Patch: All other commits (fix:, chore:, etc.)
+#
+# Version bump priority:
+#   1. PR semver:major / semver:minor / semver:patch labels (highest wins)
+#   2. Conventional commits: BREAKING CHANGE or !: = major, feat: = minor
+#   3. Default: patch
+#
+# Release notes are categorised by conventional commit type.
+# Commits with skip-changelog label are excluded.
 #
 # Package.json version is independent - used only for npm dependencies.
 name: release
 
 "on":
   workflow_dispatch:
-    # No inputs - simple button click to trigger release
+    inputs:
+      dry_run:
+        description: >-
+          If true, computes version and shows release notes preview
+          without creating a tag, release, or deploying.
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -48,8 +59,10 @@ jobs:
           # Get commits since last release
           if [ -z "$last_tag" ]; then
             commits=$(git log --oneline)
+            log_range=""
           else
             commits=$(git log --oneline ${last_tag}..HEAD)
+            log_range="${last_tag}..HEAD"
           fi
           
           # Guard against no changes
@@ -58,34 +71,63 @@ jobs:
             exit 1
           fi
           
-          # Determine version bump type
+          # --- Phase 1: Check PR labels for semver override ---
           bump="patch"
-          has_major=0
-          has_minor=0
+          semver_source="conventional-commits"
           
-          # Check for major changes: BREAKING CHANGE in body or !: in subject
-          if [ -n "$last_tag" ]; then
-            breaking=$(git log ${last_tag}..HEAD --format="%B" | grep -E 'BREAKING CHANGE' || true)
+          # Extract PR numbers from merge & squash commit messages
+          pr_numbers=$(echo "$commits" | grep -oP '#\K\d+' | sort -u)
+          
+          if [ -n "$pr_numbers" ]; then
+            echo "Found PRs: $(echo "$pr_numbers" | tr '\n' ' ')"
+            semver_major=0
+            semver_minor=0
+            for pr in $pr_numbers; do
+              labels=$(gh api "repos/${{ github.repository }}/issues/$pr/labels" \
+                --jq '.[].name' 2>/dev/null || echo "")
+              if echo "$labels" | grep -q "semver:major"; then
+                semver_major=1
+                echo "  PR #$pr → semver:major"
+              elif echo "$labels" | grep -q "semver:minor"; then
+                semver_minor=1
+                echo "  PR #$pr → semver:minor"
+              fi
+            done
+            if [ $semver_major -eq 1 ]; then
+              bump="major"
+              semver_source="pr-labels"
+            elif [ $semver_minor -eq 1 ]; then
+              bump="minor"
+              semver_source="pr-labels"
+            fi
+          fi
+          
+          # --- Phase 2: Fall back to conventional commits ---
+          if [ "$bump" = "patch" ]; then
+            has_major=0
+            has_minor=0
+            
+            if [ -z "$last_tag" ]; then
+              breaking=$(git log --format="%B" | grep -E 'BREAKING CHANGE' || true)
+            else
+              breaking=$(git log ${log_range} --format="%B" | grep -E 'BREAKING CHANGE' || true)
+            fi
             if [ -n "$breaking" ] || echo "$commits" | grep -qE '!:' ; then
               has_major=1
             fi
-          else
-            breaking=$(git log --format="%B" | grep -E 'BREAKING CHANGE' || true)
-            if [ -n "$breaking" ] || echo "$commits" | grep -qE '!:' ; then
-              has_major=1
+            
+            if echo "$commits" | grep -qE '^[a-f0-9]+ feat:' ; then
+              has_minor=1
+            fi
+            
+            if [ $has_major -eq 1 ]; then
+              bump="major"
+            elif [ $has_minor -eq 1 ]; then
+              bump="minor"
             fi
           fi
           
-          # Check for minor changes: feat commits
-          if echo "$commits" | grep -qE '^[a-f0-9]+ feat:' ; then
-            has_minor=1
-          fi
-          
-          if [ $has_major -eq 1 ]; then
-            bump="major"
-          elif [ $has_minor -eq 1 ]; then
-            bump="minor"
-          fi
+          echo "Bump: ${bump} (source: ${semver_source})"
           
           # Compute new version
           if [ -z "$last_tag" ]; then
@@ -116,13 +158,19 @@ jobs:
         run: |
           release_tag="${{ steps.version.outputs.release_tag }}"
           if gh release view "${release_tag}" >/dev/null 2>&1; then
-            echo "::error::Release ${release_tag} already exists!"
-            echo "Delete it first or trigger a new release with new commits."
-            exit 1
+            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+              echo "::warning::Release ${release_tag} already exists — would fail on real run."
+            else
+              echo "::error::Release ${release_tag} already exists!"
+              echo "Delete it first or trigger a new release with new commits."
+              exit 1
+            fi
+          else
+            echo "Release ${release_tag} does not exist - ready to create"
           fi
-          echo "Release ${release_tag} does not exist - ready to create"
 
       - name: Create and push tag
+        if: github.event.inputs.dry_run != 'true'
         run: |
           release_tag="${{ steps.version.outputs.release_tag }}"
           git config user.name "github-actions[bot]"
@@ -151,10 +199,7 @@ jobs:
               > "$commits_file" 2>/dev/null || echo "[]" > "$commits_file"
           fi
           
-          # Build contributors and changelog
-          contributors=$(jq -r 'map(.login) | unique | join(", ")' "$commits_file")
-          changelog=$(jq -r '.[] | "- " + (.message | gsub("\n"; " ") | split(" ")[0:15] | join(" ")) + " ([@" + .login + "](https://github.com/" + .login + ")), [" + (.sha[0:7]) + "](https://github.com/${{ github.repository }}/commit/" + .sha + ")"' "$commits_file")
-          
+          # Write release notes with categorized sections
           {
             echo "# ${current_tag}"
             echo
@@ -167,10 +212,40 @@ jobs:
               echo "Initial release"
               echo
             fi
-            echo "## Changes"
-            echo "$changelog"
+            
+            contributors=$(jq -r 'map(.login) | unique | join(", ")' "$commits_file")
+            
+            # Categorised sections
+            for spec in "feat:New Features" "fix:Bug Fixes" "docs:Documentation" "refactor:Refactoring" "test:Testing" "chore:Chores" "other:Other Changes"; do
+              IFS=':' read -r prefix heading <<< "$spec"
+              
+              if [ "$prefix" = "other" ]; then
+                entries=$(jq -r '
+                  .[] | select(.message |
+                    test("^(feat|fix|docs|refactor|test|chore)(\\(.+\\))?!?:") | not) |
+                  "- " + (.message | gsub("\n"; " ") | split(" ")[0:12] | join(" ")) +
+                  " ([@" + .login + "](https://github.com/" + .login +
+                  ")), [" + (.sha[0:7]) +
+                  "](https://github.com/${{ github.repository }}/commit/" + .sha + ")"
+                ' "$commits_file")
+              else
+                entries=$(jq -r --arg p "^${prefix}(\\(.+\\))?!?:" '
+                  .[] | select(.message | test($p)) |
+                  "- " + (.message | gsub("\n"; " ") | split(" ")[0:12] | join(" ")) +
+                  " ([@" + .login + "](https://github.com/" + .login +
+                  ")), [" + (.sha[0:7]) +
+                  "](https://github.com/${{ github.repository }}/commit/" + .sha + ")"
+                ' "$commits_file")
+              fi
+              
+              if [[ -n "$entries" ]]; then
+                echo "### ${heading}"
+                echo "$entries"
+                echo
+              fi
+            done
+            
             if [[ -n "$contributors" ]] && [[ "$contributors" != "null" ]]; then
-              echo
               echo "## Contributors"
               echo "$contributors"
             fi
@@ -179,12 +254,14 @@ jobs:
           echo "file=${notes_file}" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub release
+        if: github.event.inputs.dry_run != 'true'
         run: |
           gh release create "${{ steps.version.outputs.release_tag }}" \
             --title "${{ steps.version.outputs.release_tag }}" \
             --notes-file "${{ steps.notes.outputs.file }}"
 
       - name: Trigger production deployment
+        if: github.event.inputs.dry_run != 'true'
         id: deploy
         run: |
           version="${{ steps.version.outputs.version }}"
@@ -209,12 +286,26 @@ jobs:
           fi
 
       - name: Wait for deployment
-        if: steps.deploy.outputs.run_id
+        if: steps.deploy.outputs.run_id && github.event.inputs.dry_run != 'true'
         run: |
           gh run watch "${{ steps.deploy.outputs.run_id }}" --exit-status
 
+      - name: Dry-run summary
+        if: github.event.inputs.dry_run == 'true'
+        run: |
+          echo "=== DRY RUN - No changes made ==="
+          echo ""
+          echo "Would create tag: ${{ steps.version.outputs.release_tag }}"
+          echo "Would create GitHub release with categorized notes"
+          echo "Would trigger production deployment to rpi5"
+          echo ""
+          echo "Release notes preview:"
+          echo "---"
+          cat "${{ steps.notes.outputs.file }}"
+          echo "---"
+
       - name: Post to Discord
-        if: success()
+        if: success() && github.event.inputs.dry_run != 'true'
         run: |
           VERSION="${{ steps.version.outputs.release_tag }}"
           RELEASE_URL="https://github.com/${{ github.repository }}/releases/tag/$VERSION"
