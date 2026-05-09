@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/L-Town-FC/the-will-of-the-people
+    image: ghcr.io/l-town-fc/the-will-of-the-people
     restart: unless-stopped
     environment:
       NODE_ENV: production

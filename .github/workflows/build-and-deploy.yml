@@ -39,7 +39,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: ghcr.io/L-Town-FC/the-will-of-the-people
+  IMAGE_NAME: ghcr.io/l-town-fc/the-will-of-the-people
   DEV_PI_HOSTNAME: rpi3
   PROD_PI_HOSTNAME: rpi5
 
