@@ -8,7 +8,8 @@ dependencies:
     - ".nvmrc"
 
 documentation:
-  - "**/*.md"
+  - any:
+    - "**/*.md"
 
 testing:
   - any:
