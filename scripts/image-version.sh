@@ -1,6 +1,6 @@
 #!/bin/bash
 
-repo="${DOCKER_REPO:-ghcr.io/L-Town-FC}"
+repo="${DOCKER_REPO:-ghcr.io/l-town-fc}"
 name="${IMAGE_NAME:-bot}"
 
 resolve_image_tags() {
