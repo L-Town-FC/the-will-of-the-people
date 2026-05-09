@@ -1,0 +1,92 @@
+---
+# Auto-labels PRs based on changed file paths and conventional commit title.
+# Also manages semver labels so the release workflow can auto-bump.
+# Users can override the semver by manually applying semver:major / semver:minor
+# labels to the PR (the autolabel workflow will not overwrite them).
+name: autolabel
+
+"on":
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bootstrap labels
+        run: |
+          for entry in \
+            "semver:major:Breaking change (major version bump):d73a4a" \
+            "semver:minor:New feature (minor version bump):bfd4d2" \
+            "semver:patch:Bug fix (patch version bump):2ecc71" \
+            "chore:Maintenance tasks:7057ff" \
+            "refactor:Code refactoring:a2eeef" \
+            "testing:Test changes:0075ca" \
+            "skip-changelog:Exclude from release notes:000000"; do
+            IFS=':' read -r name desc color <<< "$entry"
+            gh label create "$name" \
+              --description "$desc" \
+              --color "$color" \
+              --force 2>/dev/null || true
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Path-based labeling
+        uses: actions/labeler@v5
+        with:
+          sync-labels: true
+
+      - name: Label by conventional commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const existing = context.payload.pull_request.labels.map(l => l.name);
+            const hasSemverOverride = existing.some(l => l.startsWith('semver:'));
+
+            const toAdd = [];
+
+            // Type labels — map conventional commit prefix to GH label
+            if (/^feat(\(.+\))?(!)?:\s/.test(title)) {
+              toAdd.push('enhancement');
+            } else if (/^fix(\(.+\))?(!)?:\s/.test(title)) {
+              toAdd.push('bug');
+            } else if (/^docs(\(.+\))?(!)?:\s/.test(title)) {
+              toAdd.push('documentation');
+            } else if (/^chore(\(.+\))?(!)?:\s/.test(title)) {
+              toAdd.push('chore');
+            } else if (/^refactor(\(.+\))?(!)?:\s/.test(title)) {
+              toAdd.push('refactor');
+            } else if (/^test(\(.+\))?(!)?:\s/.test(title)) {
+              toAdd.push('testing');
+            }
+
+            // Semver labels — only auto-apply if user hasn't overridden
+            if (!hasSemverOverride) {
+              if (/BREAKING CHANGE/.test(title) || /^(feat|fix)(\(.+\))?!:\s/.test(title)) {
+                toAdd.push('semver:major');
+              } else if (/^feat(\(.+\))?:\s/.test(title)) {
+                toAdd.push('semver:minor');
+              } else if (/^fix(\(.+\))?:\s/.test(title)) {
+                toAdd.push('semver:patch');
+              } else {
+                toAdd.push('semver:patch');
+              }
+            }
+
+            if (toAdd.length) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels: toAdd,
+              });
+            }

@@ -1,0 +1,51 @@
+#!/bin/sh
+
+# Conventional commit message hook
+# https://www.conventionalcommits.org/
+#
+# Validates that commit messages follow the format:
+#   <type>(<scope>)!: <description>
+#
+# Allowed types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert
+# Breaking changes: add ! after type/scope, or BREAKING CHANGE in body
+
+set -e
+
+COMMIT_MSG=$(cat "$1")
+
+# Skip merge, revert, fixup, and squash commits
+if echo "$COMMIT_MSG" | head -1 | grep -qE '^(Merge branch|Merge pull request|Revert|fixup!|squash!)'; then
+  exit 0
+fi
+
+# Conventional commit pattern
+# <type>(<scope>)!: <description>
+# or just <type>: <description>
+if ! echo "$COMMIT_MSG" | head -1 | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\([^()]+\))?!?:\s.+'; then
+  echo ""
+  echo "  \033[31mERROR: Commit message does not follow Conventional Commits format.\033[0m"
+  echo ""
+  echo "  Expected: \033[33m<type>(<scope>)!: <description>\033[0m"
+  echo ""
+  echo "  Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert"
+  echo ""
+  echo "  Examples:"
+  echo "    \033[32mfeat: add new feature\033[0m"
+  echo "    \033[32mfix(api): handle edge case\033[0m"
+  echo "    \033[32mfeat!: breaking change\033[0m"
+  echo "    \033[32mchore(deps): bump lodash\033[0m"
+  echo "    \033[32mdocs: update README\033[0m"
+  echo ""
+  echo "  Use \033[36mgit commit --no-verify\033[0m to bypass this check."
+  echo ""
+  exit 1
+fi
+
+# Check that description is not too short
+DESCRIPTION=$(echo "$COMMIT_MSG" | head -1 | sed 's/^[^(]*\(([^)]*)\)\?!\?:\s*//')
+if [ ${#DESCRIPTION} -lt 3 ]; then
+  echo ""
+  echo "  \033[31mERROR: Commit description is too short (minimum 3 characters).\033[0m"
+  echo ""
+  exit 1
+fi

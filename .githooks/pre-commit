@@ -1,0 +1,27 @@
+#!/bin/sh
+
+set -e
+
+echo "=== Pre-commit checks ==="
+
+# Temporarily stash unstaged changes so we only test staged code
+git stash -q --keep-index 2>/dev/null || true
+trap 'git stash pop -q 2>/dev/null || true' EXIT
+
+# 1. Format check (auto-fix, then verify nothing changed)
+echo "  Format: eslint --fix ..."
+npx eslint . --fix 2>/dev/null
+git diff --exit-code
+echo "  Format: OK"
+
+# 2. Lint
+echo "  Lint: npm run lint ..."
+npm run lint 2>/dev/null
+echo "  Lint: OK"
+
+# 3. Tests
+echo "  Test: npm test ..."
+npm test 2>/dev/null
+echo "  Test: OK"
+
+echo "=== Pre-commit checks passed ==="

@@ -1,0 +1,24 @@
+# Auto-label pull requests based on changed file paths.
+# Used by the autolabel workflow (actions/labeler).
+
+dependencies:
+  - any:
+    - "package.json"
+    - "package-lock.json"
+    - ".nvmrc"
+
+documentation:
+  - any:
+    - "**/*.md"
+
+testing:
+  - any:
+    - "**/*.test.js"
+    - "**/__tests__/**"
+
+chore:
+  - any:
+    - ".github/**/*"
+    - "Dockerfile"
+    - ".dockerignore"
+    - "makefile"

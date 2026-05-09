@@ -13,7 +13,7 @@ module.exports = {
                 var remote = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
                 var match = remote.match(/github\.com[:/](.+?)\.git$/);
                 if (match) repo = match[1];
-            } catch (e) {
+            } catch {
                 // Use default repo
             }
             
