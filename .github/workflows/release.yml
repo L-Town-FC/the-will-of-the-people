@@ -7,6 +7,7 @@
 # 4. Create git tag, GitHub release, and deploy to production
 #
 # Version bump priority:
+#   0. Manual version_override input (if provided, skips all auto-detection)
 #   1. PR semver:major / semver:minor / semver:patch labels (highest wins)
 #   2. Conventional commits: BREAKING CHANGE or !: = major, feat: = minor
 #   3. Default: patch
@@ -20,6 +21,13 @@ name: release
 "on":
   workflow_dispatch:
     inputs:
+      version_override:
+        description: >-
+          Optional explicit semver (e.g. "v2.6.0" or "2.6.0"). If set, uses this
+          version directly instead of auto-detecting from labels/commits.
+        required: false
+        type: string
+        default: ""
       dry_run:
         description: >-
           If true, computes version and shows release notes preview
@@ -60,6 +68,26 @@ jobs:
       - name: Compute version bump
         id: version
         run: |
+          override="${{ github.event.inputs.version_override }}"
+          
+          if [ -n "$override" ]; then
+            # Strip optional "v" prefix
+            override="${override#v}"
+            # Validate semver: X.Y.Z
+            if ! echo "$override" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::Invalid version override \"${override}\". Expected semver (e.g. 2.6.0 or v2.6.0)."
+              exit 1
+            fi
+            new_version="$override"
+            release_tag="v${override}"
+            last_tag=$(git tag --sort=-v:refname | head -n1 2>/dev/null || echo "")
+            echo "Using manual version: ${release_tag}"
+            echo "version=${new_version}" >> "$GITHUB_OUTPUT"
+            echo "release_tag=${release_tag}" >> "$GITHUB_OUTPUT"
+            echo "last_tag=${last_tag}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
           # Get last release tag
           last_tag=$(git tag --sort=-v:refname | head -n1 2>/dev/null || echo "")
           
@@ -332,6 +360,9 @@ jobs:
           echo "=== DRY RUN - No changes made ==="
           echo ""
           echo "Would create tag: ${{ steps.version.outputs.release_tag }}"
+          if [ -n "${{ github.event.inputs.version_override }}" ]; then
+            echo "Version source: manual override (${{ github.event.inputs.version_override }})"
+          fi
           echo "Would create GitHub release with categorized notes"
           echo "Would trigger production deployment to rpi5"
           if [ "${{ github.event.inputs.deploy_dev }}" == "true" ]; then
