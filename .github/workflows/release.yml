@@ -27,6 +27,13 @@ name: release
         required: false
         type: boolean
         default: false
+      deploy_dev:
+        description: >-
+          If true, also deploys to the dev pi (rpi3).
+          Defaults to false — production-only release.
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   actions: write
@@ -290,6 +297,35 @@ jobs:
         run: |
           gh run watch "${{ steps.deploy.outputs.run_id }}" --exit-status
 
+      - name: Trigger dev deployment
+        if: github.event.inputs.deploy_dev == 'true' && github.event.inputs.dry_run != 'true'
+        id: dev_deploy
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          release_tag="${{ steps.version.outputs.release_tag }}"
+          gh workflow run build-and-deploy.yml -f target=rpi3 -f version="$version" -f ref="$release_tag"
+          echo "Waiting for dev workflow to be queued..."
+          run_id=""
+          for i in $(seq 1 6); do
+            sleep 5
+            run_id=$(gh run list --workflow=build-and-deploy.yml --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || echo "")
+            if [ -n "$run_id" ] && [ "$run_id" != "null" ]; then
+              echo "Dev deployment triggered: ${run_id}"
+              echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+              break
+            fi
+            echo "Still waiting for workflow run... (attempt $i)"
+          done
+          if [ -z "$run_id" ] || [ "$run_id" == "null" ]; then
+            echo "::error::Failed to get dev workflow run ID"
+            exit 1
+          fi
+
+      - name: Wait for dev deployment
+        if: steps.dev_deploy.outputs.run_id && github.event.inputs.dry_run != 'true'
+        run: |
+          gh run watch "${{ steps.dev_deploy.outputs.run_id }}" --exit-status
+
       - name: Dry-run summary
         if: github.event.inputs.dry_run == 'true'
         run: |
@@ -298,6 +334,9 @@ jobs:
           echo "Would create tag: ${{ steps.version.outputs.release_tag }}"
           echo "Would create GitHub release with categorized notes"
           echo "Would trigger production deployment to rpi5"
+          if [ "${{ github.event.inputs.deploy_dev }}" == "true" ]; then
+            echo "Would also deploy to dev pi (rpi3)"
+          fi
           echo ""
           echo "Release notes preview:"
           echo "---"
@@ -316,7 +355,7 @@ jobs:
           # Build JSON payload using jq for proper encoding
           jq -n \
             --arg title "🚀 New Build Deployed - Based & Operational" \
-            --arg desc "**${VERSION}** is now live on the Pi. The realm endures. Another W in the bag.\n\nCheck out the [release notes](${RELEASE_URL}) for details." \
+            --arg desc "**${VERSION}** is now live on the production Pi (rpi5). The realm endures. Another W in the bag.\n\nCheck out the [release notes](${RELEASE_URL}) for details.${{ github.event.inputs.deploy_dev == 'true' && '\n\n*Also deployed to dev (rpi3).*' || '' }}" \
             --arg changes "$changes" \
             '{
               "embeds": [{
