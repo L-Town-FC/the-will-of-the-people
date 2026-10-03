@@ -17,6 +17,7 @@ partials: [
 //used to select if the dev bot is being run or the production bot is being run
 const token = process.env.NODE_ENV === 'local' ? process.env.DEVBOTTOKEN : process.env.PRODBOTTOKEN;
 const PREFIX = "!";
+const DEBUG = process.env.DEBUG === 'true' || process.env.NODE_ENV === 'local';
 
 const fs = require('fs');
 const cron = require('cron')
@@ -134,7 +135,9 @@ bot.on('guildMemberRemove', member =>{
 
 //event that triggers every time a message is sent
 bot.on('messageCreate', message =>{
-    console.log(`Message from ${message.author.id} in ${message.channel.id}: ${message.content}`)
+    if (DEBUG) {
+        console.log(`Message from ${message.author.id} in ${message.channel.id}: ${message.content}`)
+    }
     try{
         if(!message.author.bot){ //filters out bot messages from tracking
             //commmands that ary run every time someone sends a message
@@ -157,11 +160,15 @@ bot.on('messageCreate', message =>{
 })
 
 bot.on('messageCreate', message =>{    
-    console.log(`Processing command: ${message.content}`)
+    if (DEBUG) {
+        console.log(`Processing command: ${message.content}`)
+    }
     try{
         let args = message.content.substring(PREFIX.length).split(" ");
         if (message.content.startsWith("!") == true){ //only runs a command if it starts with an "!"
-            console.log(`Command detected: ${args[0]}`)
+            if (DEBUG) {
+                console.log(`Command detected: ${args[0]}`)
+            }
             if(message.author.id !== '712114529458192495' && message.author.id !== '668996755211288595'){ //668996755211288595 is the prod bot, 712114529458192495 is dev bot. only commands run by actual users are stat tracked
                 stats.tracker(message.author.id, 8, 1, stats_list) //total commands stat tracker
             }
@@ -323,6 +330,10 @@ bot.on('shardError', error => {
 bot.on('error', (err) => {
     console.error(err.message)
 });
+
+module.exports = {
+    DEBUG
+};
 
 bot.on('messageReactionAdd', reaction => {
     try{
