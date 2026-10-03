@@ -68,11 +68,7 @@ jobs:
       - name: Test with coverage
         run: |
           mkdir -p test-results
-          npm run test:coverage --
-          --coverageReporters=text-summary
-          --coverageReporters=json-summary
-          --json
-          --outputFile=test-results/jest-results.json
+          npm run test:coverage -- --coverageReporters=text-summary --coverageReporters=json-summary --json --outputFile=test-results/jest-results.json
 
       - name: Print coverage and test summary
         run: |
