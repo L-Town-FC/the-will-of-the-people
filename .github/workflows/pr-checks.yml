@@ -110,8 +110,10 @@ jobs:
       - name: Comment coverage summary
         uses: peter-evans/create-or-update-comment@v4
         with:
-          title: Coverage
-          path: coverage-summary-comment.md
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: sticky
+          body-path: coverage-summary-comment.md
+          edit-mode: replace
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
