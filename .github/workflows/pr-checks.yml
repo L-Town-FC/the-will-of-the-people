@@ -9,6 +9,10 @@ name: pr-checks
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -100,7 +104,14 @@ jobs:
           ].join("\n");
           console.log(message);
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `\n${message}\n`);
+          fs.writeFileSync("coverage-summary-comment.md", message);
           NODE
+
+      - name: Comment coverage summary
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          title: Coverage
+          path: coverage-summary-comment.md
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
