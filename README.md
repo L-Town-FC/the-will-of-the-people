@@ -1,6 +1,7 @@
 # The Will of the People
 
 [![Tests](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/pr-checks.yml)
+[![Coverage](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FL-Town-FC%2Fthe-will-of-the-people%2Fmain%2Fcoverage-badge.json)](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/pr-checks.yml)
 [![Release](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/release.yml/badge.svg)](https://github.com/L-Town-FC/the-will-of-the-people/actions/workflows/release.yml)
 
 Part joke, part institution, this bot became the engine of the server's economy, the house behind its casino, and the voice of its occasional cruelty. Some might even call it a monster. What started as a bit slowly turned into a shared system everyone pushed, tested, argued with, and added to until it became, in its own strange way, the collective will of the people.
@@ -57,16 +58,21 @@ npm run start:dev
 
 ## Tests
 
-Run the lightweight sanity suite with:
+Run the test suite with:
 
 ```bash
 npm test
 ```
 
-Current checks:
+Includes **125+ tests** across **45 suites** covering JSON consistency, command modules (shape + logic), shared function helpers, and error handling paths.
 
-- `test/json-names.test.js`: verifies approved user names across `master.json`, `stats.json`, and `tracker.json`
-- `test/json-shape.test.js`: verifies those JSON files share the same user ids and required core fields
+Coverage (measured via `jest --coverage`):
+
+```bash
+npm run test:coverage
+```
+
+Current coverage: **14.46% statements** overall. The `commands/Functions/` directory is at **86.9%** — most untested files are large command files that require Discord.js mocking.
 
 Lint the codebase with:
 
