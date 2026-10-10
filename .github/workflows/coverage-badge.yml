@@ -7,6 +7,11 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
+
+concurrency:
+  group: coverage-badge
+  cancel-in-progress: true
 
 jobs:
   update-badge:
@@ -52,10 +57,34 @@ jobs:
             "color": "'${{ steps.coverage.outputs.color }}'"
           }' > coverage-badge.json
 
-      - name: Commit and push badge
+      - name: Commit badge to branch
+        id: push
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add coverage-badge.json
-          git diff --staged --quiet || git commit -m 'ci: update coverage badge [skip ci]'
-          git push
+          if git diff --staged --quiet; then
+            echo "Badge unchanged — nothing to push"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git checkout -b ci/coverage-badge
+          git commit -m 'ci: update coverage badge'
+          git push -f origin ci/coverage-badge
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update PR and enable auto-merge
+        if: steps.push.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_URL=$(gh pr view ci/coverage-badge --json url -q .url 2>/dev/null || \
+            gh pr create \
+              --base main \
+              --head ci/coverage-badge \
+              --title 'ci: update coverage badge' \
+              --body 'Automated coverage badge update')
+          echo "PR: $PR_URL"
+          gh pr merge "$PR_URL" --auto --squash
