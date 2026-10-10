@@ -16,6 +16,7 @@ node_modules/
 
 # Test output
 coverage/
+test-results/
 .nyc_output/
 
 # Logs and OS/editor noise
