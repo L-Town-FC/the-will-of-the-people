@@ -163,6 +163,7 @@ jobs:
           echo "Deploying $img to $host..."
           tailscale ssh "$user@$host" "
             echo 'Verifying connectivity...' &&
+            docker logout ghcr.io || true &&
             docker pull $img &&
             docker stop bot || true &&
             docker rm bot || true &&
