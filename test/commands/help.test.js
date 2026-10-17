@@ -100,4 +100,40 @@ describe('help command', () => {
     );
     expect(message.channel.send.calls.length).toBe(1);
   });
+
+  test('falls back to emptyValue when a command has no rules', () => {
+    const message = createMessage();
+    const testHelp = {
+      '1': { name: '!test', description: 'Test command', rules: '' },
+    };
+
+    help.CommandHelpEmbed(message, testHelp, ['!help', '1']);
+
+    expect(embed.EmbedCreator).toHaveBeenCalledWith(
+      message,
+      '**!test**',
+      'Test command',
+      embed.emptyValue,
+    );
+    expect(message.channel.send.calls.length).toBe(1);
+  });
+
+  test('reports an error when building the help embed fails', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const message = createMessage();
+    let first = true;
+    message.channel.send = jest.fn(() => {
+      if (first) {
+        first = false;
+        throw new Error('boom');
+      }
+    });
+
+    help.execute(message, ['!help']);
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(message.channel.send).toHaveBeenLastCalledWith('Error occured in help.js');
+
+    consoleSpy.mockRestore();
+  });
 });

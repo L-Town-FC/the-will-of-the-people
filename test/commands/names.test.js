@@ -45,4 +45,23 @@ describe('names command', () => {
       },
     ]);
   });
+
+  test('reports an error when the name lookup fails', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const message = createMessage();
+    let first = true;
+    message.channel.send = jest.fn(() => {
+      if (first) {
+        first = false;
+        throw new Error('boom');
+      }
+    });
+
+    names.execute(message, { user1: { name: 'Andrew' } });
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(message.channel.send).toHaveBeenLastCalledWith('Error Occurred in Names.js');
+
+    consoleSpy.mockRestore();
+  });
 });

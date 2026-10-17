@@ -62,4 +62,23 @@ describe('update execute', () => {
     expect(fs.writeFileSync).toHaveBeenCalledTimes(4);
     expect(msg.channel.send.calls).toEqual([['Update Successful']]);
   });
+
+  test('reports an error when the success message fails to send', async () => {
+    const msg = makeMsg(ADMIN_ID);
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    let first = true;
+    msg.channel.send = jest.fn(() => {
+      if (first) {
+        first = false;
+        throw new Error('send failed');
+      }
+    });
+
+    await update.execute(msg, 'local', data, data, data, data, data, path);
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenLastCalledWith('Error occurred in Update.js');
+
+    logSpy.mockRestore();
+  });
 });

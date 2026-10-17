@@ -64,7 +64,7 @@ Run the test suite with:
 npm test
 ```
 
-Includes **125+ tests** across **45 suites** covering JSON consistency, command modules (shape + logic), shared function helpers, and error handling paths.
+Includes **528 tests** across **47 suites** covering JSON consistency, command modules (shape + logic), shared function helpers, bot routing/event handling, and error handling paths.
 
 Coverage (measured via `jest --coverage`):
 
@@ -72,7 +72,7 @@ Coverage (measured via `jest --coverage`):
 npm run test:coverage
 ```
 
-Current coverage: **14.46% statements** overall. The `commands/Functions/` directory is at **86.9%** — most untested files are large command files that require Discord.js mocking.
+Current coverage: **98.95% statements / 95.81% branches / 93.89% functions / 99.42% lines** overall. `commands/Functions/` is at **99.4%**. Remaining gaps are mostly dead-code branches (defensive checks that can never run) and `ButtonInteractions`/`Roulette_bets` in `index.js`, which are only reachable by loading real command files that seed module-internal state.
 
 Lint the codebase with:
 

@@ -52,7 +52,7 @@ function EmbedCreator(message, title, description, fields){
         //if the received fields value doesnt adhere to this it is edited until it does
         if(fields != emptyValue){
             //when there are multiple "fields" set as a single fields object they must be split up and set individually
-            if(fields.length > 1){
+            if(Array.isArray(fields)){
                 for (var i = 0; i < fields.length; i++) {
                     //the base case is that each sub field object has a string value and thus you just need the index to add each subfield to the embed
                     if(typeof(fields[i].value) == "string"){

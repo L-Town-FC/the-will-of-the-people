@@ -63,4 +63,29 @@ describe('= calculator execute', () => {
     calculator.execute(msg, makeArgs('2', '%', '3'));
     expect(msg.channel.send.calls).toEqual([['You must use one of the following operators [+,-,*,/,^]']]);
   });
+
+  test('reports an error when the message has no author', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const send = jest.fn();
+    const msg = { channel: { send } };
+
+    calculator.execute(msg, makeArgs('2', '+', '3'));
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(send).toHaveBeenCalledWith('Error occurred in =.js');
+
+    consoleSpy.mockRestore();
+  });
+
+  test('falls back to the usage message when the first arg is empty', () => {
+    const msg = makeMsg();
+    calculator.execute(msg, ['=', '', '+', '3']);
+    expect(msg.channel.send.calls).toEqual([['!= [number] [operator] [number]. Operators are [+,-,*,/,^]']]);
+  });
+
+  test('falls back to the number error when the third arg is empty', () => {
+    const msg = makeMsg();
+    calculator.execute(msg, ['=', '2', '+', '']);
+    expect(msg.channel.send.calls).toEqual([['You must choose two numbers']]);
+  });
 });

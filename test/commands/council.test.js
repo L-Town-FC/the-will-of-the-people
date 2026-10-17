@@ -35,4 +35,25 @@ describe('council execute', () => {
     expect(msg.channel.send.calls).toHaveLength(1);
     expect(msg.channel.send.calls[0]).toEqual(['lol Alex gay']);
   });
+
+  test('reports an error when sending fails', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const msg = createMessage();
+    msg.author = { id: 'user3' };
+    jest.spyOn(Math, 'random').mockReturnValue(0.49);
+    let first = true;
+    msg.channel.send = jest.fn(() => {
+      if (first) {
+        first = false;
+        throw new Error('boom');
+      }
+    });
+
+    council.execute(msg, {}, {});
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenLastCalledWith('Error Occurred in council.js');
+
+    consoleSpy.mockRestore();
+  });
 });

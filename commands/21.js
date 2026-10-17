@@ -535,7 +535,7 @@ function UpdatedEmbedMessage(message, blackJackHands, userID, master, OUTCOMES){
         //idk
     }else if(DealerHandValue(blackJackHands, userID) == 21){
         //idk
-    }else{
+    }else if(fields[1]){
         fields[1].name += "*"
     }
 

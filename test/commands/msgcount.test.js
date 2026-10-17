@@ -42,4 +42,23 @@ describe('msgcount command', () => {
       'Usage: `!msgcount leaderboard` or `!msgcount all`',
     ]);
   });
+
+  test('reports an error when sending the leaderboard fails', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const message = createMessage();
+    let first = true;
+    message.channel.send = jest.fn(() => {
+      if (first) {
+        first = false;
+        throw new Error('boom');
+      }
+    });
+
+    msgcount.execute(message, ['!msgcount'], statsList);
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(message.channel.send).toHaveBeenLastCalledWith('Error occurred in msgcount.js');
+
+    consoleSpy.mockRestore();
+  });
 });
