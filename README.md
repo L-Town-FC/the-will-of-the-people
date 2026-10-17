@@ -72,7 +72,7 @@ Coverage (measured via `jest --coverage`):
 npm run test:coverage
 ```
 
-Current coverage: **98.95% statements / 95.81% branches / 93.89% functions / 99.42% lines** overall. `commands/Functions/` is at **99.4%**. Remaining gaps are mostly dead-code branches (defensive checks that can never run) and `ButtonInteractions`/`Roulette_bets` in `index.js`, which are only reachable by loading real command files that seed module-internal state.
+Current coverage: **98.95% statements / 95.91% branches / 93.89% functions / 99.42% lines** overall. Remaining gaps are mostly dead-code branches (defensive checks that can never run) and known quirks in `21.js`/`index.js`/`embed_functions.js`.
 
 Lint the codebase with:
 
