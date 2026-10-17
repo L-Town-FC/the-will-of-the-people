@@ -54,6 +54,17 @@ describe('index_unlock', () => {
     expect(master.user1.achievements).toEqual([1]);
     expect(send).toHaveBeenCalledWith('Alice Achievement Unlock: First Steps');
   });
+
+  test('does nothing when the achievement is already unlocked', () => {
+    const send = jest.fn();
+    const channel = { send };
+    const master = { user1: { name: 'Alice', achievements: [1] } };
+
+    unlock.index_unlock('user1', 1, channel, master);
+
+    expect(master.user1.achievements).toEqual([1]);
+    expect(send).not.toHaveBeenCalled();
+  });
 });
 
 describe('reset1', () => {
@@ -162,5 +173,84 @@ describe('tracker3', () => {
 
     expect(tracker.user1[3]).toEqual([4, 5]);
     expect(master.user1.achievements).toEqual([]);
+  });
+});
+
+describe('error handling', () => {
+  test('unlock reports an error when the user is missing', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const msg = makeMsg();
+
+    unlock.unlock('ghost', 1, msg, {});
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenCalledWith('Error occurred in Achievement Unlock');
+    expect(msg.channel.send).toHaveBeenCalledWith('Achievement number: 1');
+  });
+
+  test('index_unlock swallows errors while logging', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const channel = { send: jest.fn() };
+
+    unlock.index_unlock('ghost', 1, channel, {});
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(channel.send).not.toHaveBeenCalled();
+  });
+
+  test('reset1 reports an error for an unknown user', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const msg = makeMsg();
+
+    unlock.reset1('ghost', 5, {}, msg);
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenCalledWith('Error occurred in Achievement Reset1');
+    expect(msg.channel.send).toHaveBeenCalledWith('Achievement number: 5');
+  });
+
+  test('reset2 reports an error for malformed tracker entries', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const msg = makeMsg();
+    const tracker = { other: {} };
+
+    unlock.reset2('user1', 10, 0, tracker, msg);
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenCalledWith('Error occurred in Achievement Reset2');
+    expect(msg.channel.send).toHaveBeenCalledWith('Achievement number: 10');
+  });
+
+  test('tracker1 reports an error for an unknown user', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const msg = makeMsg();
+
+    unlock.tracker1('ghost', 1, 1, msg, {}, {});
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenCalledWith('Error occurred in Achievement Tracker1');
+  });
+
+  test('tracker2 reports an error for an unknown user', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const msg = makeMsg();
+
+    unlock.tracker2('ghost', 2, 0, msg, {}, {});
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenCalledWith('Error occurred in Achievement Tracker2');
+  });
+
+  test('tracker3 reports an error for an unknown achievement', () => {
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const msg = makeMsg();
+    const master = { user1: { name: 'Alice', achievements: [] } };
+    const tracker = { user1: { 99: [1, 2] } };
+
+    unlock.tracker3('user1', 99, 0, 1, msg, master, tracker);
+
+    expect(logSpy).toHaveBeenCalled();
+    expect(msg.channel.send).toHaveBeenCalledWith('Error occurred in Achievement Tracker3');
+    expect(msg.channel.send).toHaveBeenCalledWith('Achievement number: 99');
   });
 });

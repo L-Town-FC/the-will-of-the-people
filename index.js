@@ -123,10 +123,10 @@ bot.on('guildMemberRemove', member =>{
     try{
         console.log("New user")
         UpdateUserList(master, DATABASEPATH, tracker, stats_list)
-        RemoveUser(member.id)
         //sends message when a server member leaves the server
         var channel = bot.channels.cache.find(channel => channel.id === '611276436145438769') || bot.channels.cache.find(channel => channel.id === '590585423202484227')
         channel.send(`${master[member.id].name} has left the server`)
+        RemoveUser(member.id)
     }catch(err){
         console.log('Error occured in user remover log')
         console.log(err)

@@ -37,4 +37,26 @@ describe('flip command', () => {
 
     randomSpy.mockRestore();
   });
+
+  test('reports an error when sending the result fails', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const message = createMessage();
+    message.author = { id: 'user1' };
+    const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0.1);
+    let first = true;
+    message.channel.send = jest.fn(() => {
+      if (first) {
+        first = false;
+        throw new Error('boom');
+      }
+    });
+
+    flip.execute(message, {}, {});
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(message.channel.send).toHaveBeenLastCalledWith('Error Occurred in flip.js Standings');
+
+    randomSpy.mockRestore();
+    consoleSpy.mockRestore();
+  });
 });

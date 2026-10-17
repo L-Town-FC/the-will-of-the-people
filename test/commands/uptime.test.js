@@ -16,4 +16,23 @@ describe('uptime command', () => {
       'The monster has lurked in the realm for: **1d 2h 3m 4s**',
     ]);
   });
+
+  test('reports an error when sending fails', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const message = createMessage();
+    let first = true;
+    message.channel.send = jest.fn(() => {
+      if (first) {
+        first = false;
+        throw new Error('boom');
+      }
+    });
+
+    uptime.execute(message, { uptime: 1000 });
+
+    expect(consoleSpy).toHaveBeenCalled();
+    expect(message.channel.send).toHaveBeenLastCalledWith('Error Occurred in uptime.js');
+
+    consoleSpy.mockRestore();
+  });
 });
